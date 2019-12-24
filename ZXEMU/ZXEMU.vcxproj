@@ -120,7 +120,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="EmuController.cpp" />
+    <ClCompile Include="EmuModel.cpp" />
+    <ClCompile Include="EmuRender.cpp" />
     <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="EmuController.h" />
+    <ClInclude Include="EmuModel.h" />
+    <ClInclude Include="EmuRender.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
