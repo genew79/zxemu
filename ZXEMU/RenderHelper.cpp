@@ -27,10 +27,21 @@ int RenderHelper::getBlock(int y)
 	return y / 64;
 }
 
+int RenderHelper::getRow(int y)
+{
+	return (y % 64) / 8;
+}
+
+int RenderHelper::getLine(int y)
+{
+	return y % 8;
+}
+
 int RenderHelper::getAddr(int x, int y)
 {
 	int block = RenderHelper::getBlock(y);
-	int row = y % 64 % 8;
-	int addr = block * 256 + row * 8 + y / 8 * 32 + x / 8;
+	int row = RenderHelper::getRow(y);
+	int line = RenderHelper::getLine(y);
+	int addr = block * 2048 + row * 32 + line * 256 + x / 8;
 	return addr;
 }

@@ -40,13 +40,13 @@ void FrameRender::draw(sf::RenderTarget& target, sf::RenderStates states) const
 
 	for (int y = 0; y < EmuModel::VIDEO_HEIGHT; y++)
 	{
-		for (int x = 0; x < EmuModel::VIDEO_WIDTH / 8; x++)
+		for (int x = 0; x < EmuModel::VIDEO_WIDTH; x++)
 		{
 			int address = RenderHelper::getAddr(x, y);
 			unsigned char data = video[address];
 			for (int i = 0; i < 8; i++)
 			{
-				int x_coord = (x * 8 + i) * MULT_KOEF;
+				int x_coord = x * MULT_KOEF;
 				int y_coord = y * MULT_KOEF;
 				shape.setPosition(1.f * x_coord, 1.f * y_coord);
 				shape.setFillColor(data & 0b10000000 ? fgcolor : bgcolor);

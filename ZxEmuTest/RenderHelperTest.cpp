@@ -61,6 +61,29 @@ namespace ZxEmuTest
 			Assert::AreEqual(2, RenderHelper::getBlock(191), L"Wrong block for Y = 191");
 		}
 
+		TEST_METHOD(TestRow)
+		{
+			Assert::AreEqual(0, RenderHelper::getRow(0), L"Wrong row for Y = 0");
+			Assert::AreEqual(0, RenderHelper::getRow(64), L"Wrong row for Y = 64");
+			Assert::AreEqual(0, RenderHelper::getRow(128), L"Wrong row for Y = 128");
+			Assert::AreEqual(1, RenderHelper::getRow(8), L"Wrong row for Y = 8");
+			Assert::AreEqual(1, RenderHelper::getRow(72), L"Wrong row for Y = 72");
+			Assert::AreEqual(1, RenderHelper::getRow(136), L"Wrong row for Y = 136");
+		}
+
+		TEST_METHOD(TestLine)
+		{
+			Assert::AreEqual(0, RenderHelper::getLine(0), L"Wrong line for Y = 0");
+			Assert::AreEqual(0, RenderHelper::getLine(64), L"Wrong line for Y = 64");
+			Assert::AreEqual(0, RenderHelper::getLine(128), L"Wrong line for Y = 128");
+			Assert::AreEqual(1, RenderHelper::getLine(1), L"Wrong line for Y = 1");
+			Assert::AreEqual(1, RenderHelper::getLine(65), L"Wrong line for Y = 65");
+			Assert::AreEqual(1, RenderHelper::getLine(129), L"Wrong line for Y = 129");
+			Assert::AreEqual(2, RenderHelper::getLine(26), L"Wrong line for Y = 26");
+			Assert::AreEqual(2, RenderHelper::getLine(90), L"Wrong line for Y = 90");
+			Assert::AreEqual(2, RenderHelper::getLine(154), L"Wrong line for Y = 154");
+		}
+
 		TEST_METHOD(TestAddr)
 		{
 			// 1 line of screen
