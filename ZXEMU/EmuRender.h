@@ -6,9 +6,8 @@
 class EmuRender : public sf::Drawable, public sf::Transformable
 {
 public:
-	static const int MULT_KOEF = 4;
-	static const int FRAME_WIDTH = EmuModel::VIDEO_WIDTH * MULT_KOEF;
-	static const int FRAME_HEIGHT = EmuModel::VIDEO_HEIGHT * MULT_KOEF;
+	static const int FRAME_WIDTH = EmuModel::VIDEO_WIDTH * 4;
+	static const int FRAME_HEIGHT = EmuModel::VIDEO_HEIGHT * 4;
 	static const int FRAME_SIZE = FRAME_WIDTH * FRAME_HEIGHT;
 protected:
 	EmuModel *m_model;

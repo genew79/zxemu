@@ -1,4 +1,5 @@
 #pragma once
+#include "Registers.h"
 
 class EmuModel
 {
@@ -10,13 +11,15 @@ public:
 	static const int VIDEO_ATTR_SIZE = VIDEO_WIDTH / 8 * VIDEO_HEIGHT / 8;
 	static const int RAM_SIZE = 48 * 1024 - ROM_SIZE - (VIDEO_SIZE + VIDEO_ATTR_SIZE);
 protected:
-	unsigned char m_rom[ROM_SIZE];
-	unsigned char m_video[VIDEO_SIZE];
-	unsigned char m_attr[VIDEO_ATTR_SIZE];
-	unsigned char m_ram[RAM_SIZE];
+	Registers reg;
+	unsigned char rom[ROM_SIZE];
+	unsigned char video[VIDEO_SIZE];
+	unsigned char attr[VIDEO_ATTR_SIZE];
+	unsigned char ram[RAM_SIZE];
 public:
 	EmuModel();
 	void Init();
-	unsigned char* getVideo() { return m_video; }
-	unsigned char* getVideoAttr() { return m_attr; }
+	unsigned char* getRom() { return rom; }
+	unsigned char* getVideo() { return video; }
+	unsigned char* getVideoAttr() { return attr; }
 };

@@ -5,11 +5,15 @@
 
 int main(int argc, char* argv[])
 {
+	FILE* file;
 	EmuModel model;								// Создаем модель
+
+	fopen_s(&file, "rom48.rom", "rb");
+	fread(model.getRom(), 1, 16384, file);
+	fclose(file);
 
 	if (argc > 1)
 	{
-		FILE* file;
 		fopen_s(&file, argv[1], "rb");
 		fread(model.getVideo(), 1, 6912, file);
 		fclose(file);
