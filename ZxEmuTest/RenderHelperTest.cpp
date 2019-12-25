@@ -35,7 +35,7 @@ namespace ZxEmuTest
 			// First line of screen, address = 0
 			Assert::AreEqual(0, RenderHelper::getYCoord(0), L"wrong Y coordinate for address = 0");
 			// Second line of screen, address = 8 * 32 = 256
-//			Assert::AreEqual(1, RenderHelper::getYCoord(256), L"wrong Y coordinate for address = 256");
+			Assert::AreEqual(1, RenderHelper::getYCoord(256), L"wrong Y coordinate for address = 256");
 
 			// 8-th line of screen, address = 1 * 32 = 32
 			Assert::AreEqual(8, RenderHelper::getYCoord(32), L"wrong Y coordinate for address = 32");
@@ -46,42 +46,6 @@ namespace ZxEmuTest
 
 			// 64-th line of screen, address = 64 * 32 = 2048
 			Assert::AreEqual(64, RenderHelper::getYCoord(2048), L"wrong Y coordinate for address = 2048");
-		}
-
-		TEST_METHOD(TestBlock)
-		{
-			// 0 block of screen
-			Assert::AreEqual(0, RenderHelper::getBlock(0), L"Wrong block for Y = 0");
-			Assert::AreEqual(0, RenderHelper::getBlock(0), L"Wrong block for Y = 63");
-			// 1 block of screen
-			Assert::AreEqual(1, RenderHelper::getBlock(64), L"Wrong block for Y = 64");
-			Assert::AreEqual(1, RenderHelper::getBlock(127), L"Wrong block for Y = 127");
-			// 2 block of screen
-			Assert::AreEqual(2, RenderHelper::getBlock(128), L"Wrong block for Y = 128");
-			Assert::AreEqual(2, RenderHelper::getBlock(191), L"Wrong block for Y = 191");
-		}
-
-		TEST_METHOD(TestRow)
-		{
-			Assert::AreEqual(0, RenderHelper::getRow(0), L"Wrong row for Y = 0");
-			Assert::AreEqual(0, RenderHelper::getRow(64), L"Wrong row for Y = 64");
-			Assert::AreEqual(0, RenderHelper::getRow(128), L"Wrong row for Y = 128");
-			Assert::AreEqual(1, RenderHelper::getRow(8), L"Wrong row for Y = 8");
-			Assert::AreEqual(1, RenderHelper::getRow(72), L"Wrong row for Y = 72");
-			Assert::AreEqual(1, RenderHelper::getRow(136), L"Wrong row for Y = 136");
-		}
-
-		TEST_METHOD(TestLine)
-		{
-			Assert::AreEqual(0, RenderHelper::getLine(0), L"Wrong line for Y = 0");
-			Assert::AreEqual(0, RenderHelper::getLine(64), L"Wrong line for Y = 64");
-			Assert::AreEqual(0, RenderHelper::getLine(128), L"Wrong line for Y = 128");
-			Assert::AreEqual(1, RenderHelper::getLine(1), L"Wrong line for Y = 1");
-			Assert::AreEqual(1, RenderHelper::getLine(65), L"Wrong line for Y = 65");
-			Assert::AreEqual(1, RenderHelper::getLine(129), L"Wrong line for Y = 129");
-			Assert::AreEqual(2, RenderHelper::getLine(26), L"Wrong line for Y = 26");
-			Assert::AreEqual(2, RenderHelper::getLine(90), L"Wrong line for Y = 90");
-			Assert::AreEqual(2, RenderHelper::getLine(154), L"Wrong line for Y = 154");
 		}
 
 		TEST_METHOD(TestAddr)
@@ -97,6 +61,18 @@ namespace ZxEmuTest
 			Assert::AreEqual(32, RenderHelper::getAddr(0, 8), L"Wrong address for coordinate (0, 8)");
 			// 2 line of screen
 			Assert::AreEqual(256, RenderHelper::getAddr(0, 1), L"Wrong address for coordinate (0, 1)");
+		}
+
+		TEST_METHOD(TestAttrAddr)
+		{
+			Assert::AreEqual(0, RenderHelper::getAttrAddr(0, 0), L"Wrong attribute address for coordinate (0, 0)");
+			Assert::AreEqual(0, RenderHelper::getAttrAddr(0, 1), L"Wrong attribute address for coordinate (0, 1)");
+			Assert::AreEqual(1, RenderHelper::getAttrAddr(8, 0), L"Wrong attribute address for coordinate (8, 0)");
+			Assert::AreEqual(1, RenderHelper::getAttrAddr(8, 1), L"Wrong attribute address for coordinate (8, 1)");
+			Assert::AreEqual(31, RenderHelper::getAttrAddr(255, 0), L"Wrong attribute address for coordinate (255, 0)");
+			Assert::AreEqual(32, RenderHelper::getAttrAddr(0, 8), L"Wrong attribute address for coordinate (0, 8)");
+			Assert::AreEqual(33, RenderHelper::getAttrAddr(8, 8), L"Wrong attribute address for coordinate (8, 8)");
+			Assert::AreEqual(767, RenderHelper::getAttrAddr(255, 191), L"Wrong attribute address for coordinate (255, 191)");
 		}
 
 	};

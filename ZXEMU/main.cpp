@@ -1,3 +1,4 @@
+#include <iostream>
 #include "EmuModel.h"
 #include "EmuRender.h"
 #include "EmuController.h"
@@ -8,7 +9,8 @@ int main()
 
 	try
 	{
-		auto file = fopen("ufo.scr", "r");
+		FILE* file;
+		fopen_s(&file, "ufo.scr", "rb");
 		fread(model.getVideo(), 1, 6912, file);
 		fclose(file);
 	}

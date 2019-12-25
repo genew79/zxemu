@@ -15,33 +15,48 @@ int RenderHelper::getXCoord(int address, int bit)
 
 int RenderHelper::getYCoord(int address)
 {
-	int block_size = (256 / 8 * 192) / 3;		// 2048
-	int block = address / block_size;
-	int blockaddr = address % block_size;
+	int block = address / 2048;
+	int line = (address % 2048) / 256;
+	int row = ((address % 2048) % 256) / 32;
 
-	return block * 192 / 3 + blockaddr / 32 * 8;
-}
-
-int RenderHelper::getBlock(int y)
-{
-	return y / 64;
-}
-
-int RenderHelper::getRow(int y)
-{
-	return (y % 64) / 8;
-}
-
-int RenderHelper::getLine(int y)
-{
-	return y % 8;
+	return block * 64 + row * 8 + line;
 }
 
 int RenderHelper::getAddr(int x, int y)
 {
-	int block = RenderHelper::getBlock(y);
-	int row = RenderHelper::getRow(y);
-	int line = RenderHelper::getLine(y);
+	int block = y / 64;
+	int row = (y % 64) / 8;
+	int line = y % 8;
 	int addr = block * 2048 + row * 32 + line * 256 + x / 8;
 	return addr;
+}
+
+int RenderHelper::getAttrAddr(int x, int y)
+{
+	return y / 8 * 32 + x / 8;
+}
+
+int RenderHelper::getAttrColor(unsigned char color)
+{
+	switch (color)
+	{
+	case 0:
+		return 0x000000FF;
+	case 1:
+		return 0xFFFFFFFF;
+	case 2:
+		return 0xFFFFFFFF;
+	case 3:
+		return 0xFFFFFFFF;
+	case 4:
+		return 0xFFFFFFFF;
+	case 5:
+		return 0xFFFFFFFF;
+	case 6:
+		return 0xFFFFFFFF;
+	case 7:
+		return 0xFFFFFFFF;
+	default:
+		return 0;
+	}
 }
