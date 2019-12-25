@@ -36,26 +36,26 @@ int RenderHelper::getAttrAddr(int x, int y)
 	return y / 8 * 32 + x / 8;
 }
 
-int RenderHelper::getAttrColor(unsigned char color)
+int RenderHelper::getAttrColor(unsigned char color, bool bright)
 {
 	switch (color)
 	{
 	case 0:
 		return 0x000000FF;
 	case 1:
-		return 0xFFFFFFFF;
+		return bright ? 0x0000FFFF : 0x0000C0FF;
 	case 2:
-		return 0xFFFFFFFF;
+		return bright ? 0xFF0000FF : 0xC00000FF;
 	case 3:
-		return 0xFFFFFFFF;
+		return bright ? 0xFF00FFFF : 0xC000C0FF;
 	case 4:
-		return 0xFFFFFFFF;
+		return bright ? 0x00FF00FF : 0x00C000FF;
 	case 5:
-		return 0xFFFFFFFF;
+		return bright ? 0x00FFFFFF : 0x00C0C0FF;
 	case 6:
-		return 0xFFFFFFFF;
+		return bright ? 0xFFFF00FF : 0xC0C000FF;
 	case 7:
-		return 0xFFFFFFFF;
+		return bright ? 0xFFFFFFFF : 0xC0C0C0FF;
 	default:
 		return 0;
 	}

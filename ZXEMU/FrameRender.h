@@ -11,9 +11,12 @@ public:
 	static const int FRAME_SIZE = FRAME_WIDTH * FRAME_HEIGHT;
 protected:
 	EmuModel *m_model;
+	static int invert_counter;
+	static bool invert_flag;
 public:
 	FrameRender(EmuModel *model);
 	~FrameRender();
+	void Invertor() const;
 	virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
 };
 
