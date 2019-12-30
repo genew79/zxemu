@@ -17,7 +17,7 @@ bool EmuRender::Init()
 {
 	setPosition(0.f, 0.f);
 	m_window.create(sf::VideoMode(FRAME_WIDTH, FRAME_HEIGHT), "ZXEmu");
-	m_window.setFramerateLimit(60);
+//	m_window.setFramerateLimit(60);
 	m_frame->setPosition(0.f, 0.f);
 	m_text = sf::Text();
 	m_text.setFont(Assets::Instance().font);

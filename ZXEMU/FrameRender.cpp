@@ -8,8 +8,8 @@ FrameRender::FrameRender(EmuModel *model, int magnify)
 {
 	m_model = model;
 	m_magnify = magnify;
-	m_pixels = new sf::Uint8[EmuModel::VIDEO_WIDTH * EmuModel::VIDEO_HEIGHT * 4];
-	m_texture.create(EmuModel::VIDEO_WIDTH, EmuModel::VIDEO_HEIGHT);
+	m_pixels = new sf::Uint8[EmuModel::VIDEO_WIDTH * magnify * EmuModel::VIDEO_HEIGHT * magnify * 4];
+	m_texture.create(EmuModel::VIDEO_WIDTH * magnify, EmuModel::VIDEO_HEIGHT * magnify);
 }
 
 FrameRender::~FrameRender()
@@ -26,6 +26,31 @@ void FrameRender::PrepareRender()
 	auto video = m_model->getVideo();
 	auto attr = m_model->getVideoAttr();
 
+	int index = 0;
+	for (int y = 0; y < EmuModel::VIDEO_HEIGHT * m_magnify; y++)
+	{
+		for (int x = 0; x < EmuModel::VIDEO_WIDTH * m_magnify; x++)
+		{
+			index = 4 * y * EmuModel::VIDEO_WIDTH * m_magnify + x * m_magnify;
+			m_pixels[index + 0] = 0;
+			m_pixels[index + 1] = 0;
+			m_pixels[index + 2] = 0;
+			m_pixels[index + 3] = 255;
+		}
+	}
+/*
+	for (int y = 0; y < EmuModel::VIDEO_HEIGHT * m_magnify; y += 4)
+	{
+		for (int x = 0; x < EmuModel::VIDEO_WIDTH * m_magnify; x += 4)
+		{
+			index = 4 * y * EmuModel::VIDEO_WIDTH * m_magnify + x * m_magnify;
+			m_pixels[index + 0] = 255;
+			m_pixels[index + 1] = 255;
+			m_pixels[index + 2] = 255;
+			m_pixels[index + 3] = 255;
+		}
+	}
+*/
 	for (int y = 0; y < EmuModel::VIDEO_HEIGHT; y++)
 	{
 		for (int x = 0; x < EmuModel::VIDEO_WIDTH; x += 8)
@@ -45,12 +70,49 @@ void FrameRender::PrepareRender()
 			int index;
 			for (int bit = 0; bit < 8; bit++)
 			{
-				index = RenderHelper::getFlatIndex(x + bit, y, 1);
+				index = 4 * RenderHelper::getFlatIndex(m_magnify * (x + bit) + 0, m_magnify * y + 0, m_magnify);
 				m_pixels[index + 0] = data & 0b10000000 ? fgcolor.r : bgcolor.r;
 				m_pixels[index + 1] = data & 0b10000000 ? fgcolor.g : bgcolor.g;
 				m_pixels[index + 2] = data & 0b10000000 ? fgcolor.b : bgcolor.b;
 				m_pixels[index + 3] = data & 0b10000000 ? fgcolor.a : bgcolor.a;
 
+				index = 4 * RenderHelper::getFlatIndex(m_magnify * (x + bit) + 1, m_magnify * y + 0, m_magnify);
+				m_pixels[index + 0] = data & 0b10000000 ? fgcolor.r : bgcolor.r;
+				m_pixels[index + 1] = data & 0b10000000 ? fgcolor.g : bgcolor.g;
+				m_pixels[index + 2] = data & 0b10000000 ? fgcolor.b : bgcolor.b;
+				m_pixels[index + 3] = data & 0b10000000 ? fgcolor.a : bgcolor.a;
+
+				index = 4 * RenderHelper::getFlatIndex(m_magnify * (x + bit) + 0, m_magnify * y + 1, m_magnify);
+				m_pixels[index + 0] = data & 0b10000000 ? fgcolor.r : bgcolor.r;
+				m_pixels[index + 1] = data & 0b10000000 ? fgcolor.g : bgcolor.g;
+				m_pixels[index + 2] = data & 0b10000000 ? fgcolor.b : bgcolor.b;
+				m_pixels[index + 3] = data & 0b10000000 ? fgcolor.a : bgcolor.a;
+
+				index = 4 * RenderHelper::getFlatIndex(m_magnify * (x + bit) + 1, m_magnify * y + 1, m_magnify);
+				m_pixels[index + 0] = data & 0b10000000 ? fgcolor.r : bgcolor.r;
+				m_pixels[index + 1] = data & 0b10000000 ? fgcolor.g : bgcolor.g;
+				m_pixels[index + 2] = data & 0b10000000 ? fgcolor.b : bgcolor.b;
+				m_pixels[index + 3] = data & 0b10000000 ? fgcolor.a : bgcolor.a;
+
+/*
+				index += 4;
+				m_pixels[index + 0] = data & 0b10000000 ? fgcolor.r : bgcolor.r;
+				m_pixels[index + 1] = data & 0b10000000 ? fgcolor.g : bgcolor.g;
+				m_pixels[index + 2] = data & 0b10000000 ? fgcolor.b : bgcolor.b;
+				m_pixels[index + 3] = data & 0b10000000 ? fgcolor.a : bgcolor.a;
+
+				index += EmuModel::VIDEO_WIDTH * m_magnify - 4;
+				m_pixels[index + 0] = data & 0b10000000 ? fgcolor.r : bgcolor.r;
+				m_pixels[index + 1] = data & 0b10000000 ? fgcolor.g : bgcolor.g;
+				m_pixels[index + 2] = data & 0b10000000 ? fgcolor.b : bgcolor.b;
+				m_pixels[index + 3] = data & 0b10000000 ? fgcolor.a : bgcolor.a;
+
+				index += 4;
+				m_pixels[index + 0] = data & 0b10000000 ? fgcolor.r : bgcolor.r;
+				m_pixels[index + 1] = data & 0b10000000 ? fgcolor.g : bgcolor.g;
+				m_pixels[index + 2] = data & 0b10000000 ? fgcolor.b : bgcolor.b;
+				m_pixels[index + 3] = data & 0b10000000 ? fgcolor.a : bgcolor.a;
+*/
 				data <<= 1;
 			}
 		}
