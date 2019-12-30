@@ -9,4 +9,5 @@ public:
 	static int getAddr(int x, int y);
 	static int getAttrAddr(int x, int y);
 	static int getAttrColor(unsigned char color, bool bright);
+	static int getFlatIndex(int x, int y, int magnify = 1);
 };

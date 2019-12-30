@@ -13,6 +13,8 @@ protected:
 	EmuModel *m_model;
 	FrameRender* m_frame;
 	sf::RenderWindow m_window;
+	sf::Clock m_clock;
+	sf::Text m_text;
 public:
 	EmuRender(EmuModel *model);
 	~EmuRender();

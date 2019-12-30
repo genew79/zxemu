@@ -60,3 +60,8 @@ int RenderHelper::getAttrColor(unsigned char color, bool bright)
 		return 0;
 	}
 }
+
+int RenderHelper::getFlatIndex(int x, int y, int magnify)
+{
+	return (y * 256 * magnify + x * magnify) * 4;
+}

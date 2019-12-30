@@ -1,4 +1,5 @@
 #include <iostream>
+#include "Assets.h"
 #include "EmuModel.h"
 #include "EmuRender.h"
 #include "EmuController.h"
@@ -6,6 +7,9 @@
 int main(int argc, char* argv[])
 {
 	FILE* file;
+
+	Assets::Instance().Load();
+
 	EmuModel model;								// Создаем модель
 
 	fopen_s(&file, "rom48.rom", "rb");
