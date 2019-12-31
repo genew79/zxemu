@@ -70,49 +70,17 @@ void FrameRender::PrepareRender()
 			int index;
 			for (int bit = 0; bit < 8; bit++)
 			{
-				index = 4 * RenderHelper::getFlatIndex(m_magnify * (x + bit) + 0, m_magnify * y + 0, m_magnify);
-				m_pixels[index + 0] = data & 0b10000000 ? fgcolor.r : bgcolor.r;
-				m_pixels[index + 1] = data & 0b10000000 ? fgcolor.g : bgcolor.g;
-				m_pixels[index + 2] = data & 0b10000000 ? fgcolor.b : bgcolor.b;
-				m_pixels[index + 3] = data & 0b10000000 ? fgcolor.a : bgcolor.a;
-
-				index = 4 * RenderHelper::getFlatIndex(m_magnify * (x + bit) + 1, m_magnify * y + 0, m_magnify);
-				m_pixels[index + 0] = data & 0b10000000 ? fgcolor.r : bgcolor.r;
-				m_pixels[index + 1] = data & 0b10000000 ? fgcolor.g : bgcolor.g;
-				m_pixels[index + 2] = data & 0b10000000 ? fgcolor.b : bgcolor.b;
-				m_pixels[index + 3] = data & 0b10000000 ? fgcolor.a : bgcolor.a;
-
-				index = 4 * RenderHelper::getFlatIndex(m_magnify * (x + bit) + 0, m_magnify * y + 1, m_magnify);
-				m_pixels[index + 0] = data & 0b10000000 ? fgcolor.r : bgcolor.r;
-				m_pixels[index + 1] = data & 0b10000000 ? fgcolor.g : bgcolor.g;
-				m_pixels[index + 2] = data & 0b10000000 ? fgcolor.b : bgcolor.b;
-				m_pixels[index + 3] = data & 0b10000000 ? fgcolor.a : bgcolor.a;
-
-				index = 4 * RenderHelper::getFlatIndex(m_magnify * (x + bit) + 1, m_magnify * y + 1, m_magnify);
-				m_pixels[index + 0] = data & 0b10000000 ? fgcolor.r : bgcolor.r;
-				m_pixels[index + 1] = data & 0b10000000 ? fgcolor.g : bgcolor.g;
-				m_pixels[index + 2] = data & 0b10000000 ? fgcolor.b : bgcolor.b;
-				m_pixels[index + 3] = data & 0b10000000 ? fgcolor.a : bgcolor.a;
-
-/*
-				index += 4;
-				m_pixels[index + 0] = data & 0b10000000 ? fgcolor.r : bgcolor.r;
-				m_pixels[index + 1] = data & 0b10000000 ? fgcolor.g : bgcolor.g;
-				m_pixels[index + 2] = data & 0b10000000 ? fgcolor.b : bgcolor.b;
-				m_pixels[index + 3] = data & 0b10000000 ? fgcolor.a : bgcolor.a;
-
-				index += EmuModel::VIDEO_WIDTH * m_magnify - 4;
-				m_pixels[index + 0] = data & 0b10000000 ? fgcolor.r : bgcolor.r;
-				m_pixels[index + 1] = data & 0b10000000 ? fgcolor.g : bgcolor.g;
-				m_pixels[index + 2] = data & 0b10000000 ? fgcolor.b : bgcolor.b;
-				m_pixels[index + 3] = data & 0b10000000 ? fgcolor.a : bgcolor.a;
-
-				index += 4;
-				m_pixels[index + 0] = data & 0b10000000 ? fgcolor.r : bgcolor.r;
-				m_pixels[index + 1] = data & 0b10000000 ? fgcolor.g : bgcolor.g;
-				m_pixels[index + 2] = data & 0b10000000 ? fgcolor.b : bgcolor.b;
-				m_pixels[index + 3] = data & 0b10000000 ? fgcolor.a : bgcolor.a;
-*/
+				for (int dy = 0; dy < m_magnify; dy++)
+				{
+					for (int dx = 0; dx < m_magnify; dx++)
+					{
+						index = 4 * RenderHelper::getFlatIndex(m_magnify * (x + bit) + dx, m_magnify * y + dy, m_magnify);
+						m_pixels[index + 0] = data & 0b10000000 ? fgcolor.r : bgcolor.r;
+						m_pixels[index + 1] = data & 0b10000000 ? fgcolor.g : bgcolor.g;
+						m_pixels[index + 2] = data & 0b10000000 ? fgcolor.b : bgcolor.b;
+						m_pixels[index + 3] = data & 0b10000000 ? fgcolor.a : bgcolor.a;
+					}
+				}
 				data <<= 1;
 			}
 		}

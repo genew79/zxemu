@@ -77,12 +77,12 @@ namespace ZxEmuTest
 
 		TEST_METHOD(TestFlatIndex)
 		{
-			Assert::AreEqual(0, RenderHelper::getFlatIndex(0, 0), L"Wrong index for coordinate (0, 0)");
-			Assert::AreEqual(1, RenderHelper::getFlatIndex(1, 0), L"Wrong index for coordinate (1, 0)");
-			Assert::AreEqual(255, RenderHelper::getFlatIndex(255, 0), L"Wrong index for coordinate (255, 0)");
-			Assert::AreEqual(256, RenderHelper::getFlatIndex(0, 1), L"Wrong index for coordinate (0, 1)");
-			Assert::AreEqual(257, RenderHelper::getFlatIndex(1, 1), L"Wrong index for coordinate (0, 0)");
-			Assert::AreEqual(49151, RenderHelper::getFlatIndex(255, 191), L"Wrong index for coordinate (255, 191)");
+			Assert::AreEqual(0, RenderHelper::getFlatIndex(0, 0, 1), L"Wrong index for coordinate (0, 0)");
+			Assert::AreEqual(1, RenderHelper::getFlatIndex(1, 0, 1), L"Wrong index for coordinate (1, 0)");
+			Assert::AreEqual(255, RenderHelper::getFlatIndex(255, 0, 1), L"Wrong index for coordinate (255, 0)");
+			Assert::AreEqual(256, RenderHelper::getFlatIndex(0, 1, 1), L"Wrong index for coordinate (0, 1)");
+			Assert::AreEqual(257, RenderHelper::getFlatIndex(1, 1, 1), L"Wrong index for coordinate (0, 0)");
+			Assert::AreEqual(49151, RenderHelper::getFlatIndex(255, 191, 1), L"Wrong index for coordinate (255, 191)");
 		}
 
 	};

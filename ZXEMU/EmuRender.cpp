@@ -4,7 +4,7 @@
 EmuRender::EmuRender(EmuModel *model)
 {
 	m_model = model;
-	m_frame = new FrameRender(model, 4);
+	m_frame = new FrameRender(model, 2);
 	Init();
 }
 
