@@ -28,6 +28,8 @@ bool EmuRender::Init()
 
 void EmuRender::Render()
 {
+	unsigned __int16* video = (unsigned __int16*)m_model->getVideo();
+	video[0] = m_model->getCpu()->PC;
 	m_frame->PrepareRender2();
 	m_window.clear();
 	m_window.draw(*this);

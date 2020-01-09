@@ -26,6 +26,7 @@ void EmuController::Run()
 			}
 		}
 
+		for(int i = 0; i < 100; i++) m_model->Step();
 		// Выполняем необходимые действия по отрисовке
 		m_render->Render();
 	}

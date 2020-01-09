@@ -13,7 +13,7 @@ int main(int argc, char* argv[])
 	EmuModel model;								// Создаем модель
 
 	fopen_s(&file, "rom48.rom", "rb");
-	fread(model.getRom(), 1, 16384, file);
+	fread(model.getRam(), 1, 16384, file);
 	fclose(file);
 
 	if (argc > 1)

@@ -1,7 +1,12 @@
 #pragma once
 
-class Registers
+#define LOBYTE(w) ((unsigned __int8)(w))
+#define HIBYTE(w) ((unsigned __int8)(((unsigned __int16)(w) >> 8) & 0xFF))
+
+class CPU
 {
+protected:
+	unsigned __int8 *ram;
 public:
 	unsigned __int16 PC;
 	unsigned __int16 SP;
@@ -16,8 +21,10 @@ public:
 	unsigned __int16 _DE;
 	unsigned __int16 _HL;
 public:
-	Registers();
-	~Registers();
+	CPU(unsigned __int8 *pram);
+	~CPU();
+	void Step();
+protected:
 	void LD16(unsigned __int16& reg, unsigned __int16 val);
 	void LD8LO(unsigned __int16& reg, unsigned __int8 val);
 	void LD8HI(unsigned __int16& reg, unsigned __int8 val);
