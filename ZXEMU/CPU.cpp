@@ -42,7 +42,7 @@ void CPU::Step()
 	case 0x09:
 		break;
 	case 0x0A:		// LD A,(BC)
-		LD8HI(AF, ram[BC]);
+		LD16(AF, HIBYTE(AF) | ram[BC]);
 		break;
 	case 0x0B:
 		break;
