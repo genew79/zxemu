@@ -15,6 +15,7 @@ public:
 	FrameRender(EmuModel *model, int magnify = 4);
 	~FrameRender();
 	void PrepareRender();
+	void PrepareRender2();
 	void Invertor() const;
 	virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
 };

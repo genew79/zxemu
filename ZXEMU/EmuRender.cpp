@@ -4,7 +4,7 @@
 EmuRender::EmuRender(EmuModel *model)
 {
 	m_model = model;
-	m_frame = new FrameRender(model, 2);
+	m_frame = new FrameRender(model, 4);
 	Init();
 }
 
@@ -28,7 +28,7 @@ bool EmuRender::Init()
 
 void EmuRender::Render()
 {
-	m_frame->PrepareRender();
+	m_frame->PrepareRender2();
 	m_window.clear();
 	m_window.draw(*this);
 	m_window.display();
