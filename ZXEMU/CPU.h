@@ -25,6 +25,8 @@ public:
 	~CPU();
 	void Step();
 protected:
+	void Processing_00_0F(unsigned __int8 opcode);
+	void Processing_10_1F(unsigned __int8 opcode);
 	void LD16(unsigned __int16& reg, unsigned __int16 val);
 	void LD8LO(unsigned __int16& reg, unsigned __int8 val);
 	void LD8HI(unsigned __int16& reg, unsigned __int8 val);

@@ -12,9 +12,26 @@ CPU::~CPU()
 
 void CPU::Step()
 {
-	auto op = ram[PC++];
+	auto opcode = ram[PC++];
 
-	switch (op)
+	if (opcode >= 0x00 && opcode <= 0x0F) Processing_00_0F(opcode);
+	else if (opcode >= 0x10 && opcode <= 0x1F) Processing_10_1F(opcode);
+/*
+	case 0xD9:		// EXX D9
+		EXX();
+		break;
+	case 0xEB:		// EX DE,HL
+		EX16(DE, HL);
+		break;
+	default:
+		break;
+	}
+*/
+}
+
+void CPU::Processing_00_0F(unsigned __int8 opcode)
+{
+	switch (opcode)
 	{
 	case 0x00:
 		break;
@@ -54,11 +71,48 @@ void CPU::Step()
 		break;
 	case 0x0F:
 		break;
-	case 0xD9:		// EXX D9
-		EXX();
+	default:
 		break;
-	case 0xEB:		// EX DE,HL
-		EX16(DE, HL);
+	}
+}
+
+void CPU::Processing_10_1F(unsigned __int8 opcode)
+{
+	switch (opcode)
+	{
+	case 0x10:
+		break;
+	case 0x11:		// LD DE,NN		11 NN NN
+		LD16(DE, (ram[PC + 1] << 8) + ram[PC]);
+		PC += 2;
+		break;
+	case 0x12:
+		break;
+	case 0x13:
+		break;
+	case 0x14:
+		break;
+	case 0x15:
+		break;
+	case 0x16:
+		break;
+	case 0x17:
+		break;
+	case 0x18:
+		break;
+	case 0x19:
+		break;
+	case 0x1A:
+		break;
+	case 0x1B:
+		break;
+	case 0x1C:
+		break;
+	case 0x1D:
+		break;
+	case 0x1E:
+		break;
+	case 0x1F:
 		break;
 	default:
 		break;
