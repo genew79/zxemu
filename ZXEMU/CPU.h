@@ -9,13 +9,13 @@ protected:
 	unsigned __int8 *ram;
 public:
 	unsigned __int16 PC;
-	unsigned __int16 SP;
-	unsigned __int16 IX;
-	unsigned __int16 IY;
 	unsigned __int16 AF;
 	unsigned __int16 BC;
 	unsigned __int16 DE;
 	unsigned __int16 HL;
+	unsigned __int16 IX;
+	unsigned __int16 IY;
+	unsigned __int16 SP;
 	unsigned __int16 _AF;
 	unsigned __int16 _BC;
 	unsigned __int16 _DE;
