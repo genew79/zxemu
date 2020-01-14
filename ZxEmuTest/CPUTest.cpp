@@ -6,7 +6,7 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace ZxEmuTest
 {		
-	unsigned __int8 mem[10];
+	unsigned __int8 mem[65536];
 	CPU *cpu;
 
 	TEST_CLASS(CPUTest)
@@ -212,6 +212,44 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 3);
 		}
 
+		TEST_METHOD(Test0x2A)	// LD HL,(NN)	2A NN NN
+		{
+			mem[0] = 0x2A;
+			mem[1] = 0xCD;
+			mem[2] = 0xAB;
+			mem[0xABCD + 0] = 0xEF;
+			mem[0xABCD + 1] = 0xFE;
+			cpu->Step();
+			Assert::IsTrue(cpu->HL == 0xFEEF);
+			Assert::IsTrue(cpu->PC == 3);
+		}
+
+		TEST_METHOD(Test0xDD2A)	// LD IX,(NN)	DD 2A NN NN
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x2A;
+			mem[2] = 0xCD;
+			mem[3] = 0xAB;
+			mem[0xABCD + 0] = 0xEF;
+			mem[0xABCD + 1] = 0xFE;
+			cpu->Step();
+			Assert::IsTrue(cpu->IX == 0xFEEF);
+			Assert::IsTrue(cpu->PC == 4);
+		}
+
+		TEST_METHOD(Test0xFD2A)	// LD IY,(NN)	FD 2A NN NN
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x2A;
+			mem[2] = 0xCD;
+			mem[3] = 0xAB;
+			mem[0xABCD + 0] = 0xEF;
+			mem[0xABCD + 1] = 0xFE;
+			cpu->Step();
+			Assert::IsTrue(cpu->IY == 0xFEEF);
+			Assert::IsTrue(cpu->PC == 4);
+		}
+
 		TEST_METHOD(Test0x2E)	// LD L,N	2E NN
 		{
 			mem[0] = 0x2E;
@@ -248,6 +286,17 @@ namespace ZxEmuTest
 			mem[2] = 0x12;
 			cpu->Step();
 			Assert::IsTrue(cpu->SP == 0x1234);
+			Assert::IsTrue(cpu->PC == 3);
+		}
+
+		TEST_METHOD(Test0x3A)	// LD A,(NN)	3A NN NN
+		{
+			mem[0] = 0x3A;
+			mem[1] = 0xCD;
+			mem[2] = 0xAB;
+			mem[0xABCD] = 0xEF;
+			cpu->Step();
+			Assert::IsTrue(cpu->AF == 0xEF00);
 			Assert::IsTrue(cpu->PC == 3);
 		}
 
@@ -379,6 +428,19 @@ namespace ZxEmuTest
 			cpu->Step();
 			Assert::IsTrue(cpu->BC == 0x00CD);
 			Assert::IsTrue(cpu->PC == 1);
+		}
+
+		TEST_METHOD(Test0xED4B)	// LD BC,(NN)	ED 4B NN NN
+		{
+			mem[0] = 0xED;
+			mem[1] = 0x4B;
+			mem[2] = 0xCD;
+			mem[3] = 0xAB;
+			mem[0xABCD + 0] = 0xEF;
+			mem[0xABCD + 1] = 0xFE;
+			cpu->Step();
+			Assert::IsTrue(cpu->BC == 0xFEEF);
+			Assert::IsTrue(cpu->PC == 4);
 		}
 
 		TEST_METHOD(Test0x4C)	// LD C,H	4C
@@ -533,6 +595,41 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 2);
 		}
 
+		TEST_METHOD(Test0xED5B)	// LD DE,(NN)	ED 5B NN NN
+		{
+			mem[0] = 0xED;
+			mem[1] = 0x5B;
+			mem[2] = 0xCD;
+			mem[3] = 0xAB;
+			mem[0xABCD + 0] = 0xEF;
+			mem[0xABCD + 1] = 0xFE;
+			cpu->Step();
+			Assert::IsTrue(cpu->DE == 0xFEEF);
+			Assert::IsTrue(cpu->PC == 4);
+		}
+
+		TEST_METHOD(Test0x5F)	// LD E,A	5F
+		{
+			mem[0] = 0x5F;
+			cpu->AF = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->DE == 0x00AB);
+			Assert::IsTrue(cpu->PC == 1);
+		}
+
+		TEST_METHOD(Test0xED6B)	// LD HL,(NN)	ED 6B NN NN
+		{
+			mem[0] = 0xED;
+			mem[1] = 0x6B;
+			mem[2] = 0xCD;
+			mem[3] = 0xAB;
+			mem[0xABCD + 0] = 0xEF;
+			mem[0xABCD + 1] = 0xFE;
+			cpu->Step();
+			Assert::IsTrue(cpu->HL == 0xFEEF);
+			Assert::IsTrue(cpu->PC == 4);
+		}
+
 		TEST_METHOD(Test0x78)	// LD A,B	78
 		{
 			mem[0] = 0x78;
@@ -567,6 +664,19 @@ namespace ZxEmuTest
 			cpu->Step();
 			Assert::IsTrue(cpu->AF == 0x3400);
 			Assert::IsTrue(cpu->PC == 1);
+		}
+
+		TEST_METHOD(Test0xED7B)	// LD SP,(NN)	ED 7B NN NN
+		{
+			mem[0] = 0xED;
+			mem[1] = 0x7B;
+			mem[2] = 0xCD;
+			mem[3] = 0xAB;
+			mem[0xABCD + 0] = 0xEF;
+			mem[0xABCD + 1] = 0xFE;
+			cpu->Step();
+			Assert::IsTrue(cpu->SP == 0xFEEF);
+			Assert::IsTrue(cpu->PC == 4);
 		}
 
 		TEST_METHOD(Test0x7C)	// LD A,H	7C
