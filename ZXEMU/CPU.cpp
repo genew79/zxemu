@@ -75,7 +75,7 @@ void CPU::Processing_00_0F(unsigned __int8 opcode, unsigned __int8 prefix)
 	case 0x00:
 		break;
 	case 0x01:		// LD BC,NN 01 NN NN
-		LD16(BC, (ram[PC + 1] << 8) + ram[PC]);
+		LD16(BC, ram[PC + 1] * 256 + ram[PC]);
 		PC += 2;
 		break;
 	case 0x02:
@@ -124,7 +124,7 @@ void CPU::Processing_10_1F(unsigned __int8 opcode, unsigned __int8 prefix)
 	case 0x10:
 		break;
 	case 0x11:		// LD DE,NN		11 NN NN
-		LD16(DE, (ram[PC + 1] << 8) + ram[PC]);
+		LD16(DE, ram[PC + 1] * 256 + ram[PC]);
 		PC += 2;
 		break;
 	case 0x12:
@@ -172,11 +172,11 @@ void CPU::Processing_20_2F(unsigned __int8 opcode, unsigned __int8 prefix)
 		break;
 	case 0x21:
 		if (prefix == 0xDD)
-			LD16(IX, (ram[PC + 1] << 8) + ram[PC]);		// LD IX, NN	DD 21 NN NN
+			LD16(IX, ram[PC + 1] * 256 + ram[PC]);		// LD IX, NN	DD 21 NN NN
 		else if(prefix == 0xFD)
-			LD16(IY, (ram[PC + 1] << 8) + ram[PC]);		// LD IY, NN	FD 21 NN NN
+			LD16(IY, ram[PC + 1] * 256 + ram[PC]);		// LD IY, NN	FD 21 NN NN
 		else
-			LD16(HL, (ram[PC + 1] << 8) + ram[PC]);		// LD HL, NN	21 NN NN
+			LD16(HL, ram[PC + 1] * 256 + ram[PC]);		// LD HL, NN	21 NN NN
 		PC += 2;
 		break;
 	case 0x22:
@@ -251,7 +251,7 @@ void CPU::Processing_30_3F(unsigned __int8 opcode, unsigned __int8 prefix)
 	case 0x30:
 		break;
 	case 0x31:		// LD SP,NN	31 NN NN
-		LD16(SP, (ram[PC + 1] << 8) + ram[PC]);
+		LD16(SP, ram[PC + 1] * 256 + ram[PC]);
 		PC += 2;
 		break;
 	case 0x32:
