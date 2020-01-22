@@ -145,7 +145,8 @@ void CPU::Processing_10_1F(unsigned __int8 opcode, unsigned __int8 prefix)
 		break;
 	case 0x19:
 		break;
-	case 0x1A:
+	case 0x1A:		// LD A,(DE)	1A
+		LD8HI(AF, ram[DE]);
 		break;
 	case 0x1B:
 		break;
@@ -323,6 +324,12 @@ void CPU::Processing_40_4F(unsigned __int8 opcode, unsigned __int8 prefix)
 			LD8HI(BC, LOBYTE(HL));		// LD B,L	45
 		break;
 	case 0x46:
+		if (prefix == 0xDD)
+			LD8HI(BC, ram[IX + ram[PC++]]);		// LD B,(IX+s)	DD 46 ss
+		else if (prefix == 0xFD)
+			LD8HI(BC, ram[IY + ram[PC++]]);		// LD B,(IY+s)	FD 46 ss
+		else
+			LD8HI(BC, ram[HL]);					// LD B,(HL)	46
 		break;
 	case 0x47:		// LD B,A	47
 		LD8HI(BC, HIBYTE(AF));
@@ -361,7 +368,8 @@ void CPU::Processing_40_4F(unsigned __int8 opcode, unsigned __int8 prefix)
 		else
 			LD8LO(BC, LOBYTE(HL));		// LD C,L	4D
 		break;
-	case 0x4E:
+	case 0x4E:		// LD C,(HL)	4E
+		LD8LO(BC, ram[HL]);
 		break;
 	case 0x4F:		// LD C,A	4F
 		LD8LO(BC, HIBYTE(AF));
@@ -402,7 +410,8 @@ void CPU::Processing_50_5F(unsigned __int8 opcode, unsigned __int8 prefix)
 		else
 			LD8HI(DE, LOBYTE(HL));		// LD D,L	55
 		break;
-	case 0x56:
+	case 0x56:		// LD D,(HL)	56
+		LD8HI(DE, ram[HL]);
 		break;
 	case 0x57:		// LD D,A	57
 		LD8HI(DE, HIBYTE(AF));
@@ -441,7 +450,8 @@ void CPU::Processing_50_5F(unsigned __int8 opcode, unsigned __int8 prefix)
 		else
 			LD8LO(DE, LOBYTE(HL));		// LD E,L	5D
 		break;
-	case 0x5E:
+	case 0x5E:		// LD E,(HL)	5E
+		LD8LO(DE, ram[HL]);
 		break;
 	case 0x5F:		// LD E,A	5F
 		LD8LO(DE, HIBYTE(AF));
@@ -497,7 +507,8 @@ void CPU::Processing_60_6F(unsigned __int8 opcode, unsigned __int8 prefix)
 		else
 			LD8HI(HL, LOBYTE(HL));		// LD H,L	65
 		break;
-	case 0x66:
+	case 0x66:		// LD H,(HL)	66
+		LD8HI(HL, ram[HL]);
 		break;
 	case 0x67:
 		if (prefix == 0xDD)
@@ -555,7 +566,8 @@ void CPU::Processing_60_6F(unsigned __int8 opcode, unsigned __int8 prefix)
 		break;
 	case 0x6D:
 		break;
-	case 0x6E:
+	case 0x6E:		// LD L,(HL)	6E
+		LD8LO(HL, ram[HL]);
 		break;
 	case 0x6F:
 		if (prefix == 0xDD)
@@ -626,6 +638,12 @@ void CPU::Processing_70_7F(unsigned __int8 opcode, unsigned __int8 prefix)
 			LD8HI(AF, LOBYTE(HL));		// LD A,L	7D
 		break;
 	case 0x7E:
+		if (prefix == 0xDD)
+			LD8HI(AF, ram[IX + ram[PC++]]);		// LD A,(IX+s)	DD 7E ss
+		else if (prefix == 0xFD)
+			LD8HI(AF, ram[IY + ram[PC++]]);		// LD A,(IY+s)	FD 7E ss
+		else
+			LD8HI(AF, ram[HL]);					// LD A,(HL)	7E
 		break;
 	case 0x7F:
 		break;
