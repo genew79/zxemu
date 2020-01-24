@@ -368,8 +368,13 @@ void CPU::Processing_40_4F(unsigned __int8 opcode, unsigned __int8 prefix)
 		else
 			LD8LO(BC, LOBYTE(HL));		// LD C,L	4D
 		break;
-	case 0x4E:		// LD C,(HL)	4E
-		LD8LO(BC, ram[HL]);
+	case 0x4E:
+		if (prefix == 0xDD)
+			LD8LO(BC, ram[IX + ram[PC++]]);		// LD C, (IX + s)	DD 4E ss
+		else if (prefix == 0xFD)
+			LD8LO(BC, ram[IY + ram[PC++]]);		// LD C,(IY+s)	FD 4E ss
+		else
+			LD8LO(BC, ram[HL]);					// LD C,(HL)	4E
 		break;
 	case 0x4F:		// LD C,A	4F
 		LD8LO(BC, HIBYTE(AF));
@@ -410,8 +415,13 @@ void CPU::Processing_50_5F(unsigned __int8 opcode, unsigned __int8 prefix)
 		else
 			LD8HI(DE, LOBYTE(HL));		// LD D,L	55
 		break;
-	case 0x56:		// LD D,(HL)	56
-		LD8HI(DE, ram[HL]);
+	case 0x56:
+		if (prefix == 0xDD)
+			LD8HI(DE, ram[IX + ram[PC++]]);		// LD D,(IX+s)	DD 56 ss
+		else if (prefix == 0xFD)
+			LD8HI(DE, ram[IY + ram[PC++]]);		// LD D,(IY+s)	FD 56 ss
+		else
+			LD8HI(DE, ram[HL]);					// LD D,(HL)	56
 		break;
 	case 0x57:		// LD D,A	57
 		LD8HI(DE, HIBYTE(AF));
