@@ -16,6 +16,7 @@ public:
 	unsigned __int16 IX;
 	unsigned __int16 IY;
 	unsigned __int16 SP;
+	unsigned __int16 IR;
 	unsigned __int16 _AF;
 	unsigned __int16 _BC;
 	unsigned __int16 _DE;
