@@ -423,17 +423,17 @@ void CPU::Processing_50_5F(unsigned __int8 opcode, unsigned __int8 prefix)
 		else
 			LD8HI(DE, ram[HL]);					// LD D,(HL)	56
 		break;
-	case 0x57:		// LD D,A	57
-		LD8HI(DE, HIBYTE(AF));
+	case 0x57:
+		LD8HI(DE, HIBYTE(AF));		// LD D,A	57
 		break;
-	case 0x58:		// LD E,B	58
-		LD8LO(DE, HIBYTE(BC));
+	case 0x58:
+		LD8LO(DE, HIBYTE(BC));		// LD E,B	58
 		break;
-	case 0x59:		// LD E,C	59
-		LD8LO(DE, LOBYTE(BC));
+	case 0x59:
+		LD8LO(DE, LOBYTE(BC));		// LD E,C	59
 		break;
-	case 0x5A:		// LD E,D	5A
-		LD8LO(DE, HIBYTE(DE));
+	case 0x5A:
+		LD8LO(DE, HIBYTE(DE));		// LD E,D	5A
 		break;
 	case 0x5B:
 		if (prefix == 0xED)
@@ -501,7 +501,7 @@ void CPU::Processing_60_6F(unsigned __int8 opcode, unsigned __int8 prefix)
 		break;
 	case 0x63:
 		if (prefix == 0xDD)
-			LD8HI(IX, LOBYTE(BC));		// LD XH,E	DD 63
+			LD8HI(IX, LOBYTE(DE));		// LD XH,E	DD 63
 		else if (prefix == 0xFD)
 			LD8HI(IY, LOBYTE(DE));		// LD YH,E	FD 63
 		else

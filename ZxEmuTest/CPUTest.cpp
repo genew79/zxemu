@@ -716,6 +716,42 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 3);
 		}
 
+		TEST_METHOD(Test0x57)	// LD D,A	57
+		{
+			mem[0] = 0x57;
+			cpu->AF = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->DE == 0xAB00);
+			Assert::IsTrue(cpu->PC == 1);
+		}
+
+		TEST_METHOD(Test0x58)	// LD E,B	58
+		{
+			mem[0] = 0x58;
+			cpu->BC = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->DE == 0x00AB);
+			Assert::IsTrue(cpu->PC == 1);
+		}
+
+		TEST_METHOD(Test0x59)	// LD E,C	59
+		{
+			mem[0] = 0x59;
+			cpu->BC = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->DE == 0x00CD);
+			Assert::IsTrue(cpu->PC == 1);
+		}
+
+		TEST_METHOD(Test0x5A)	// LD E,D	5A
+		{
+			mem[0] = 0x5A;
+			cpu->DE = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->DE == 0xABAB);
+			Assert::IsTrue(cpu->PC == 1);
+		}
+
 		TEST_METHOD(Test0xED5B)	// LD DE,(NN)	ED 5B NN NN
 		{
 			mem[0] = 0xED;
@@ -727,6 +763,64 @@ namespace ZxEmuTest
 			cpu->Step();
 			Assert::IsTrue(cpu->DE == 0xFEEF);
 			Assert::IsTrue(cpu->PC == 4);
+		}
+
+		TEST_METHOD(Test0x5C)	// LD E,H	5C
+		{
+			mem[0] = 0x5C;
+			cpu->HL = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->DE == 0x00AB);
+			Assert::IsTrue(cpu->PC == 1);
+		}
+
+		TEST_METHOD(Test0xDD5C)	// LD E,XH	DD 5C
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x5C;
+			cpu->IX = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->DE == 0x00AB);
+			Assert::IsTrue(cpu->PC == 2);
+		}
+
+		TEST_METHOD(Test0xFD5C)	// LD E,YH	FD 5C
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x5C;
+			cpu->IY = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->DE == 0x00AB);
+			Assert::IsTrue(cpu->PC == 2);
+		}
+
+		TEST_METHOD(Test0x5D)	// LD E,L	5D
+		{
+			mem[0] = 0x5D;
+			cpu->HL = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->DE == 0x00CD);
+			Assert::IsTrue(cpu->PC == 1);
+		}
+
+		TEST_METHOD(Test0xDD5D)	// LD E,XL	DD 5D
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x5D;
+			cpu->IX = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->DE == 0x00CD);
+			Assert::IsTrue(cpu->PC == 2);
+		}
+
+		TEST_METHOD(Test0xFD5D)	// LD E,YL	FD 5D
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x5D;
+			cpu->IY = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->DE == 0x00CD);
+			Assert::IsTrue(cpu->PC == 2);
 		}
 
 		TEST_METHOD(Test0x5E)	// LD E,(HL)
@@ -749,6 +843,151 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 1);
 		}
 
+		TEST_METHOD(Test0x60)	// LD H,B	60
+		{
+			mem[0] = 0x60;
+			cpu->BC = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->HL == 0xAB00);
+			Assert::IsTrue(cpu->PC == 1);
+		}
+
+		TEST_METHOD(Test0xDD60)	// LD XH,B	DD 60
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x60;
+			cpu->BC = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->IX == 0xAB00);
+			Assert::IsTrue(cpu->PC == 2);
+		}
+
+		TEST_METHOD(Test0xFD60)	// LD YH,B	FD 60
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x60;
+			cpu->BC = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->IY == 0xAB00);
+			Assert::IsTrue(cpu->PC == 2);
+		}
+
+		TEST_METHOD(Test0x61)	// LD H,C	61
+		{
+			mem[0] = 0x61;
+			cpu->BC = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->HL == 0xCD00);
+			Assert::IsTrue(cpu->PC == 1);
+		}
+
+		TEST_METHOD(Test0xDD61)	// LD XH,C	DD 61
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x61;
+			cpu->BC = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->IX == 0xCD00);
+			Assert::IsTrue(cpu->PC == 2);
+		}
+
+		TEST_METHOD(Test0xFD61)	// LD YH,C	FD 61
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x61;
+			cpu->BC = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->IY == 0xCD00);
+			Assert::IsTrue(cpu->PC == 2);
+		}
+
+		TEST_METHOD(Test0x62)	// LD H,D	62
+		{
+			mem[0] = 0x62;
+			cpu->DE = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->HL == 0xAB00);
+			Assert::IsTrue(cpu->PC == 1);
+		}
+
+		TEST_METHOD(Test0xDD62)	// LD XH,D	DD 62
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x62;
+			cpu->DE = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->IX == 0xAB00);
+			Assert::IsTrue(cpu->PC == 2);
+		}
+
+		TEST_METHOD(Test0xFD62)	// LD YH,D	FD 62
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x62;
+			cpu->DE = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->IY == 0xAB00);
+			Assert::IsTrue(cpu->PC == 2);
+		}
+
+		TEST_METHOD(Test0x63)	// LD H,E	63
+		{
+			mem[0] = 0x63;
+			cpu->DE = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->HL == 0xCD00);
+			Assert::IsTrue(cpu->PC == 1);
+		}
+
+		TEST_METHOD(Test0xDD63)	// LD XH,E	DD 63
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x63;
+			cpu->DE = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->IX == 0xCD00);
+			Assert::IsTrue(cpu->PC == 2);
+		}
+
+		TEST_METHOD(Test0xFD63)	// LD YH,E	FD 63
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x63;
+			cpu->DE = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->IY == 0xCD00);
+			Assert::IsTrue(cpu->PC == 2);
+		}
+
+		TEST_METHOD(Test0x65)	// LD H,L	65
+		{
+			mem[0] = 0x65;
+			cpu->HL = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->HL == 0xCDCD);
+			Assert::IsTrue(cpu->PC == 1);
+		}
+
+		TEST_METHOD(Test0xDD65)	// LD XH,XL	DD 65
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x65;
+			cpu->IX = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->IX == 0xCDCD);
+			Assert::IsTrue(cpu->PC == 2);
+		}
+
+		TEST_METHOD(Test0xFD65)	// LD YH,YL	FD 65
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x65;
+			cpu->IY = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->IY == 0xCDCD);
+			Assert::IsTrue(cpu->PC == 2);
+		}
+
 		TEST_METHOD(Test0x66)	// LD H,(HL)
 		{
 			mem[0] = 0x66;
@@ -757,6 +996,151 @@ namespace ZxEmuTest
 			cpu->Step();
 			Assert::IsTrue(cpu->HL == 0xDD01);
 			Assert::IsTrue(cpu->PC == 1);
+		}
+
+		TEST_METHOD(Test0x67)	// LD H,A	67
+		{
+			mem[0] = 0x67;
+			cpu->AF = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->HL == 0xAB00);
+			Assert::IsTrue(cpu->PC == 1);
+		}
+
+		TEST_METHOD(Test0xDD67)	// LD XH,A	DD 67
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x67;
+			cpu->AF = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->IX == 0xAB00);
+			Assert::IsTrue(cpu->PC == 2);
+		}
+
+		TEST_METHOD(Test0xFD67)	// LD YH,A	FD 67
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x67;
+			cpu->AF = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->IY == 0xAB00);
+			Assert::IsTrue(cpu->PC == 2);
+		}
+
+		TEST_METHOD(Test0x68)	// LD L,B	68
+		{
+			mem[0] = 0x68;
+			cpu->BC = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->HL == 0x00AB);
+			Assert::IsTrue(cpu->PC == 1);
+		}
+
+		TEST_METHOD(Test0xDD68)	// LD XL,B	DD 68
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x68;
+			cpu->BC = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->IX == 0x00AB);
+			Assert::IsTrue(cpu->PC == 2);
+		}
+
+		TEST_METHOD(Test0xFD68)	// LD YL,B	FD 68
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x68;
+			cpu->BC = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->IY == 0x00AB);
+			Assert::IsTrue(cpu->PC == 2);
+		}
+
+		TEST_METHOD(Test0x69)	// LD L,C	69
+		{
+			mem[0] = 0x69;
+			cpu->BC = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->HL == 0x00CD);
+			Assert::IsTrue(cpu->PC == 1);
+		}
+
+		TEST_METHOD(Test0xDD69)	// LD XL,C	DD 69
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x69;
+			cpu->BC = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->IX == 0x00CD);
+			Assert::IsTrue(cpu->PC == 2);
+		}
+
+		TEST_METHOD(Test0xFD69)	// LD YL,C	FD 69
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x69;
+			cpu->BC = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->IY == 0x00CD);
+			Assert::IsTrue(cpu->PC == 2);
+		}
+
+		TEST_METHOD(Test0x6A)	// LD L,D	6A
+		{
+			mem[0] = 0x6A;
+			cpu->DE = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->HL == 0x00AB);
+			Assert::IsTrue(cpu->PC == 1);
+		}
+
+		TEST_METHOD(Test0xDD6A)	// LD XL,D	DD 6A
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x6A;
+			cpu->DE = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->IX == 0x00AB);
+			Assert::IsTrue(cpu->PC == 2);
+		}
+
+		TEST_METHOD(Test0xFD6A)	// LD YL,D	FD 6A
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x6A;
+			cpu->DE = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->IY == 0x00AB);
+			Assert::IsTrue(cpu->PC == 2);
+		}
+
+		TEST_METHOD(Test0x6B)	// LD L,E	6B
+		{
+			mem[0] = 0x6B;
+			cpu->DE = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->HL == 0x00CD);
+			Assert::IsTrue(cpu->PC == 1);
+		}
+
+		TEST_METHOD(Test0xDD6B)	// LD XL,E	DD 6B
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x6B;
+			cpu->DE = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->IX == 0x00CD);
+			Assert::IsTrue(cpu->PC == 2);
+		}
+
+		TEST_METHOD(Test0xFD6B)	// LD YL,E	FD 6B
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x6B;
+			cpu->DE = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->IY == 0x00CD);
+			Assert::IsTrue(cpu->PC == 2);
 		}
 
 		TEST_METHOD(Test0xED6B)	// LD HL,(NN)	ED 6B NN NN
@@ -772,6 +1156,35 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 4);
 		}
 
+		TEST_METHOD(Test0x6C)	// LD L,H	6C
+		{
+			mem[0] = 0x6C;
+			cpu->HL = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->HL == 0xABAB);
+			Assert::IsTrue(cpu->PC == 1);
+		}
+
+		TEST_METHOD(Test0xDD6C)	// LD XL,XH	DD 6C
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x6C;
+			cpu->IX = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->IX == 0xABAB);
+			Assert::IsTrue(cpu->PC == 2);
+		}
+
+		TEST_METHOD(Test0xFD6C)	// LD YL,YH	FD 6C
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x6C;
+			cpu->IY = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->IY == 0xABAB);
+			Assert::IsTrue(cpu->PC == 2);
+		}
+
 		TEST_METHOD(Test0x6E)	// LD L,(HL)
 		{
 			mem[0] = 0x6E;
@@ -780,6 +1193,35 @@ namespace ZxEmuTest
 			cpu->Step();
 			Assert::IsTrue(cpu->HL == 0x00DD);
 			Assert::IsTrue(cpu->PC == 1);
+		}
+
+		TEST_METHOD(Test0x6F)	// LD L,A	6F
+		{
+			mem[0] = 0x6F;
+			cpu->AF = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->HL == 0x00AB);
+			Assert::IsTrue(cpu->PC == 1);
+		}
+
+		TEST_METHOD(Test0xDD6F)	// LD XL,A	DD 6F
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x6F;
+			cpu->AF = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->IX == 0x00AB);
+			Assert::IsTrue(cpu->PC == 2);
+		}
+
+		TEST_METHOD(Test0xFD6F)	// LD YL,A	FD 6F
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x6F;
+			cpu->AF = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->IY == 0x00AB);
+			Assert::IsTrue(cpu->PC == 2);
 		}
 
 		TEST_METHOD(Test0x78)	// LD A,B	78
