@@ -15,6 +15,9 @@ int main(int argc, char* argv[])
 	fopen_s(&file, "rom48.rom", "rb");
 	fread(model.getRam(), 1, 16384, file);
 	fclose(file);
+//	fopen_s(&file, "Gamex.scr", "rb");
+//	fread(model.getVideo(), 1, 6912, file);
+//	fclose(file);
 
 	if (argc > 1)
 	{

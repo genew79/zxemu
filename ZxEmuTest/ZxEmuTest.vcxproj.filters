@@ -27,7 +27,7 @@
     <ClInclude Include="..\ZXEMU\RenderHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\ZXEMU\Registers.h">
+    <ClInclude Include="..\ZXEMU\CPU.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -44,7 +44,10 @@
     <ClCompile Include="..\ZXEMU\RenderHelper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\ZXEMU\Registers.cpp">
+    <ClCompile Include="..\ZXEMU\CPU.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CPUTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

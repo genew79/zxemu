@@ -40,6 +40,11 @@ void CPU::EXX()
 	EX16(HL, _HL);
 }
 
+void CPU::Stop(unsigned __int8 opcode)
+{
+//	throw opcode;
+}
+
 void CPU::Step()
 {
 	unsigned __int8 prefix = 0;
@@ -74,43 +79,53 @@ void CPU::Processing_00_0F(unsigned __int8 opcode, unsigned __int8 prefix)
 	{
 	case 0x00:
 		break;
-	case 0x01:		// LD BC,NN 01 NN NN
+	case 0x01:		// LD BC,NN		01 NN NN
 		LD16(BC, ram[PC + 1] * 256 + ram[PC]);
 		PC += 2;
 		break;
 	case 0x02:
+		ram[BC] = HIBYTE(AF);		// LD (BC),A	02
 		break;
 	case 0x03:
+		BC++;		// INC BC		03
 		break;
 	case 0x04:
+		Stop(opcode);
 		break;
 	case 0x05:
+		Stop(opcode);
 		break;
-	case 0x06:		// LD B,N 06 NN
+	case 0x06:		// LD B,N		06 NN
 		LD8HI(BC, ram[PC]);
 		PC += 1;
 		break;
 	case 0x07:
+		Stop(opcode);
 		break;
-	case 0x08:		// EX AF, A'F' 08
+	case 0x08:		// EX AF, A'F'		08
 		EX16(AF, _AF);
 		break;
 	case 0x09:
+		Stop(opcode);
 		break;
 	case 0x0A:		// LD A,(BC)
 		LD8HI(AF, ram[BC]);
 		break;
 	case 0x0B:
+		BC--;		// DEC BC		1B
 		break;
 	case 0x0C:
+		Stop(opcode);
 		break;
 	case 0x0D:
+		Stop(opcode);
 		break;
-	case 0x0E:		// LD C,N	0E NN
+	case 0x0E:		// LD C,N		0E NN
 		LD8LO(BC, ram[PC]);
 		PC += 1;
 		break;
 	case 0x0F:
+		Stop(opcode);
 		break;
 	default:
 		break;
@@ -128,8 +143,10 @@ void CPU::Processing_10_1F(unsigned __int8 opcode, unsigned __int8 prefix)
 		PC += 2;
 		break;
 	case 0x12:
+		ram[DE] = HIBYTE(AF);		// LD (DE),A	12
 		break;
 	case 0x13:
+		DE++;		// INC DE		13
 		break;
 	case 0x14:
 		break;
@@ -142,6 +159,7 @@ void CPU::Processing_10_1F(unsigned __int8 opcode, unsigned __int8 prefix)
 	case 0x17:
 		break;
 	case 0x18:
+		PC = PC + (__int8)ram[PC] + 1;		// JR s		18 ss
 		break;
 	case 0x19:
 		break;
@@ -149,6 +167,7 @@ void CPU::Processing_10_1F(unsigned __int8 opcode, unsigned __int8 prefix)
 		LD8HI(AF, ram[DE]);
 		break;
 	case 0x1B:
+		DE--;		// DEC DE		1B
 		break;
 	case 0x1C:
 		break;
@@ -181,8 +200,32 @@ void CPU::Processing_20_2F(unsigned __int8 opcode, unsigned __int8 prefix)
 		PC += 2;
 		break;
 	case 0x22:
+		if (prefix == 0xDD)
+		{
+			ram[ram[PC + 1] * 256 + ram[PC]] = LOBYTE(IX);		// LD (NN),IX	DD 22 NN NN
+			ram[ram[PC + 1] * 256 + ram[PC] + 1] = HIBYTE(IX);
+			PC += 2;
+		}
+		else if (prefix == 0xFD)
+		{
+			ram[ram[PC + 1] * 256 + ram[PC]] = LOBYTE(IY);		// LD (NN),IY	FD 22 NN NN
+			ram[ram[PC + 1] * 256 + ram[PC] + 1] = HIBYTE(IY);
+			PC += 2;
+		}
+		else
+		{
+			ram[ram[PC + 1] * 256 + ram[PC]] = LOBYTE(HL);		// LD (NN),HL	22 NN NN
+			ram[ram[PC + 1] * 256 + ram[PC] + 1] = HIBYTE(HL);
+			PC += 2;
+		}
 		break;
 	case 0x23:
+		if (prefix == 0xDD)
+			IX++;					// INC IX	DD 23
+		else if (prefix == 0xFD)
+			IY++;					// INC IY	FD 23
+		else
+			HL++;					// INC HL	23
 		break;
 	case 0x24:
 		break;
@@ -224,6 +267,12 @@ void CPU::Processing_20_2F(unsigned __int8 opcode, unsigned __int8 prefix)
 		}
 		break;
 	case 0x2B:
+		if (prefix == 0xDD)
+			IX--;		// DEC IX		DD 2B
+		if (prefix == 0xFD)
+			IY--;		// DEC IY		FD 2B
+		else
+			HL--;		// DEC HL		2B
 		break;
 	case 0x2C:
 		break;
@@ -255,15 +304,33 @@ void CPU::Processing_30_3F(unsigned __int8 opcode, unsigned __int8 prefix)
 		LD16(SP, ram[PC + 1] * 256 + ram[PC]);
 		PC += 2;
 		break;
-	case 0x32:
+	case 0x32:		// LD (NN),A	32 NN NN
+		ram[ram[PC + 1] * 256 + ram[PC]] = HIBYTE(AF);
+		PC += 2;
 		break;
 	case 0x33:
+		SP++;
 		break;
 	case 0x34:
 		break;
 	case 0x35:
 		break;
 	case 0x36:
+		if (prefix == 0xDD)
+		{
+			ram[IX + (__int8)ram[PC]] = ram[PC + 1];		// LD (IX+s),N		DD 36 ss NN
+			PC += 2;
+		}
+		else if (prefix == 0xFD)
+		{
+			ram[IY + (__int8)ram[PC]] = ram[PC + 1];		// LD (IY+s),N		FD 36 ss NN
+			PC += 2;
+		}
+		else
+		{
+			ram[HL] = ram[PC];		// LD (HL),N	36
+			PC += 1;
+		}
 		break;
 	case 0x37:
 		break;
@@ -276,6 +343,7 @@ void CPU::Processing_30_3F(unsigned __int8 opcode, unsigned __int8 prefix)
 		PC += 2;
 		break;
 	case 0x3B:
+		SP--;		// DEC SP		3B
 		break;
 	case 0x3C:
 		break;
@@ -304,8 +372,15 @@ void CPU::Processing_40_4F(unsigned __int8 opcode, unsigned __int8 prefix)
 	case 0x42:		// LD B,D	42
 		LD8HI(BC, HIBYTE(DE));
 		break;
-	case 0x43:		// LD B,E	43
-		LD8HI(BC, LOBYTE(DE));
+	case 0x43:
+		if (prefix == 0xED)
+		{
+			ram[ram[PC + 1] * 256 + ram[PC]] = LOBYTE(BC);		// LD (NN),BC	ED 43 NN NN
+			ram[ram[PC + 1] * 256 + ram[PC] + 1] = HIBYTE(BC);
+			PC += 2;
+		}
+		else
+			LD8HI(BC, LOBYTE(DE));		// LD B,E	43
 		break;
 	case 0x44:
 		if (prefix == 0xDD)
@@ -325,9 +400,15 @@ void CPU::Processing_40_4F(unsigned __int8 opcode, unsigned __int8 prefix)
 		break;
 	case 0x46:
 		if (prefix == 0xDD)
-			LD8HI(BC, ram[IX + ram[PC++]]);		// LD B,(IX+s)	DD 46 ss
+		{
+			LD8HI(BC, ram[IX + (__int8)ram[PC]]);		// LD B,(IX+s)	DD 46 ss
+			PC += 1;
+		}
 		else if (prefix == 0xFD)
-			LD8HI(BC, ram[IY + ram[PC++]]);		// LD B,(IY+s)	FD 46 ss
+		{
+			LD8HI(BC, ram[IY + (__int8)ram[PC]]);		// LD B,(IY+s)	FD 46 ss
+			PC += 1;
+		}
 		else
 			LD8HI(BC, ram[HL]);					// LD B,(HL)	46
 		break;
@@ -373,9 +454,15 @@ void CPU::Processing_40_4F(unsigned __int8 opcode, unsigned __int8 prefix)
 		break;
 	case 0x4E:
 		if (prefix == 0xDD)
-			LD8LO(BC, ram[IX + ram[PC++]]);		// LD C, (IX + s)	DD 4E ss
+		{
+			LD8LO(BC, ram[IX + (__int8)ram[PC]]);		// LD C, (IX + s)	DD 4E ss
+			PC += 1;
+		}
 		else if (prefix == 0xFD)
-			LD8LO(BC, ram[IY + ram[PC++]]);		// LD C,(IY+s)	FD 4E ss
+		{
+			LD8LO(BC, ram[IY + (__int8)ram[PC]]);		// LD C,(IY+s)	FD 4E ss
+			PC += 1;
+		}
 		else
 			LD8LO(BC, ram[HL]);					// LD C,(HL)	4E
 		break;
@@ -402,8 +489,15 @@ void CPU::Processing_50_5F(unsigned __int8 opcode, unsigned __int8 prefix)
 		break;
 	case 0x52:		// LD D,D	52
 		break;
-	case 0x53:		// LD D,E	53
-		LD8HI(DE, LOBYTE(DE));
+	case 0x53:
+		if (prefix == 0xED)
+		{
+			ram[ram[PC + 1] * 256 + ram[PC]] = LOBYTE(DE);		// LD (NN),DE	ED 53 NN NN
+			ram[ram[PC + 1] * 256 + ram[PC] + 1] = HIBYTE(DE);
+			PC += 2;
+		}
+		else
+			LD8HI(DE, LOBYTE(DE));		// LD D,E	53
 		break;
 	case 0x54:
 		if(prefix == 0xDD)
@@ -423,15 +517,26 @@ void CPU::Processing_50_5F(unsigned __int8 opcode, unsigned __int8 prefix)
 		break;
 	case 0x56:
 		if (prefix == 0xDD)
-			LD8HI(DE, ram[IX + ram[PC++]]);		// LD D,(IX+s)	DD 56 ss
+		{
+			LD8HI(DE, ram[IX + (__int8)ram[PC]]);		// LD D,(IX+s)	DD 56 ss
+			PC += 1;
+		}
 		else if (prefix == 0xFD)
-			LD8HI(DE, ram[IY + ram[PC++]]);		// LD D,(IY+s)	FD 56 ss
+		{
+			LD8HI(DE, ram[IY + (__int8)ram[PC]]);		// LD D,(IY+s)	FD 56 ss
+			PC += 1;
+		}
 		else
 			LD8HI(DE, ram[HL]);					// LD D,(HL)	56
 		break;
 	case 0x57:
 		if (prefix == 0xED)
+		{
 			LD8HI(AF, HIBYTE(IR));		// LD A,I	ED 57
+			LD8LO(AF, LOBYTE(AF) & 0b01101101);
+			if (HIBYTE(AF) == 0x00) LD8LO(AF, LOBYTE(AF) | 0b01000000);
+			LD8LO(AF, LOBYTE(AF) | (IFF2 ? 0b00000100 : 0x00));
+		}
 		else
 			LD8HI(DE, HIBYTE(AF));		// LD D,A	57
 		break;
@@ -469,12 +574,28 @@ void CPU::Processing_50_5F(unsigned __int8 opcode, unsigned __int8 prefix)
 		else
 			LD8LO(DE, LOBYTE(HL));		// LD E,L	5D
 		break;
-	case 0x5E:		// LD E,(HL)	5E
-		LD8LO(DE, ram[HL]);
+	case 0x5E:
+		if (prefix == 0xDD)
+		{
+			LD8LO(DE, ram[IX + (__int8)ram[PC]]);		// LD E,(IX+s)	DD 5E ss
+			PC += 1;
+		}
+		else if (prefix == 0xFD)
+		{
+			LD8LO(DE, ram[IY + (__int8)ram[PC]]);		// LD E,(IY+s)	FD 5E ss
+			PC += 1;
+		}
+		else
+			LD8LO(DE, ram[HL]);					// LD E,(HL)	5E
 		break;
 	case 0x5F:
 		if (prefix == 0xED)
+		{
 			LD8HI(AF, LOBYTE(IR));		// LD A,R	ED 5F
+			LD8LO(AF, LOBYTE(AF) & 0b01101101);
+			if (HIBYTE(AF) == 0x00) LD8LO(AF, LOBYTE(AF) | 0b01000000);
+			LD8LO(AF, LOBYTE(AF) | (IFF2 ? 0b00000100 : 0x00));
+		}
 		else
 			LD8LO(DE, HIBYTE(AF));		// LD E,A	5F
 		break;
@@ -512,7 +633,13 @@ void CPU::Processing_60_6F(unsigned __int8 opcode, unsigned __int8 prefix)
 			LD8HI(HL, HIBYTE(DE));		// LD H,D	62
 		break;
 	case 0x63:
-		if (prefix == 0xDD)
+		if (prefix == 0xED)
+		{
+			ram[ram[PC + 1] * 256 + ram[PC]] = LOBYTE(HL);		// LD (NN),HL	ED 63 NN NN
+			ram[ram[PC + 1] * 256 + ram[PC] + 1] = HIBYTE(HL);
+			PC += 2;
+		}
+		else if (prefix == 0xDD)
 			LD8HI(IX, LOBYTE(DE));		// LD XH,E	DD 63
 		else if (prefix == 0xFD)
 			LD8HI(IY, LOBYTE(DE));		// LD YH,E	FD 63
@@ -529,8 +656,19 @@ void CPU::Processing_60_6F(unsigned __int8 opcode, unsigned __int8 prefix)
 		else
 			LD8HI(HL, LOBYTE(HL));		// LD H,L	65
 		break;
-	case 0x66:		// LD H,(HL)	66
-		LD8HI(HL, ram[HL]);
+	case 0x66:
+		if (prefix == 0xDD)
+		{
+			LD8HI(HL, ram[IX + (__int8)ram[PC]]);		// LD H,(IX+s)	DD 66 ss
+			PC += 1;
+		}
+		else if (prefix == 0xFD)
+		{
+			LD8HI(HL, ram[IY + (__int8)ram[PC]]);		// LD H,(IY+s)	FD 66 ss
+			PC += 1;
+		}
+		else
+			LD8HI(HL, ram[HL]);					// LD H,(HL)	66
 		break;
 	case 0x67:
 		if (prefix == 0xDD)
@@ -588,8 +726,19 @@ void CPU::Processing_60_6F(unsigned __int8 opcode, unsigned __int8 prefix)
 		break;
 	case 0x6D:
 		break;
-	case 0x6E:		// LD L,(HL)	6E
-		LD8LO(HL, ram[HL]);
+	case 0x6E:
+		if (prefix == 0xDD)
+		{
+			LD8LO(HL, ram[IX + (__int8)ram[PC]]);		// LD L,(IX+s)	DD 6E ss
+			PC += 1;
+		}
+		else if (prefix == 0xFD)
+		{
+			LD8LO(HL, ram[IY + (__int8)ram[PC]]);		// LD L,(IY+s)	FD 6E ss
+			PC += 1;
+		}
+		else
+			LD8LO(HL, ram[HL]);					// LD L,(HL)	6E
 		break;
 	case 0x6F:
 		if (prefix == 0xDD)
@@ -609,20 +758,110 @@ void CPU::Processing_70_7F(unsigned __int8 opcode, unsigned __int8 prefix)
 	switch (opcode)
 	{
 	case 0x70:
+		if (prefix == 0xDD)
+		{
+			ram[IX + (__int8)ram[PC]] = HIBYTE(BC);		// LD (IX+s),B		DD 70 ss
+			PC += 1;
+		}
+		else if (prefix == 0xFD)
+		{
+			ram[IY + (__int8)ram[PC]] = HIBYTE(BC);		// LD (IY+s),B		FD 70 ss
+			PC += 1;
+		}
+		else
+			ram[HL] = HIBYTE(BC);		// LD (HL),B	70
 		break;
 	case 0x71:
+		if (prefix == 0xDD)
+		{
+			ram[IX + (__int8)ram[PC]] = LOBYTE(BC);		// LD (IX+s),C		DD 71 ss
+			PC += 1;
+		}
+		else if (prefix == 0xFD)
+		{
+			ram[IY + (__int8)ram[PC]] = LOBYTE(BC);		// LD (IY+s),C		FD 71 ss
+			PC += 1;
+		}
+		else
+			ram[HL] = LOBYTE(BC);		// LD (HL),C	71
 		break;
 	case 0x72:
+		if (prefix == 0xDD)
+		{
+			ram[IX + (__int8)ram[PC]] = HIBYTE(DE);		// LD (IX+s),D		DD 72 ss
+			PC += 1;
+		}
+		else if (prefix == 0xFD)
+		{
+			ram[IY + (__int8)ram[PC]] = HIBYTE(DE);		// LD (IY+s),D		FD 72 ss
+			PC += 1;
+		}
+		else
+			ram[HL] = HIBYTE(DE);		// LD (HL),D	72
 		break;
 	case 0x73:
+		if (prefix == 0xED)
+		{
+			ram[ram[PC + 1] * 256 + ram[PC]] = LOBYTE(SP);		// LD (NN),SP	ED 73 NN NN
+			ram[ram[PC + 1] * 256 + ram[PC] + 1] = HIBYTE(SP);
+			PC += 2;
+		}
+		else if (prefix == 0xDD)
+		{
+			ram[IX + (__int8)ram[PC]] = LOBYTE(DE);		// LD (IX+s),E		DD 73 ss
+			PC += 1;
+		}
+		else if (prefix == 0xFD)
+		{
+			ram[IY + (__int8)ram[PC]] = LOBYTE(DE);		// LD (IY+s),E		FD 73 ss
+			PC += 1;
+		}
+		else
+			ram[HL] = LOBYTE(DE);		// LD (HL),E	73
 		break;
 	case 0x74:
+		if (prefix == 0xDD)
+		{
+			ram[IX + (__int8)ram[PC]] = HIBYTE(HL);		// LD (IX+s),H		DD 74 ss
+			PC += 1;
+		}
+		else if (prefix == 0xFD)
+		{
+			ram[IY + (__int8)ram[PC]] = HIBYTE(HL);		// LD (IY+s),H		FD 74 ss
+			PC += 1;
+		}
+		else
+			ram[HL] = HIBYTE(HL);		// LD (HL),H	74
 		break;
 	case 0x75:
+		if (prefix == 0xDD)
+		{
+			ram[IX + (__int8)ram[PC]] = LOBYTE(HL);		// LD (IX+s),L		DD 75 ss
+			PC += 1;
+		}
+		else if (prefix == 0xFD)
+		{
+			ram[IY + (__int8)ram[PC]] = LOBYTE(HL);		// LD (IY+s),L		FD 75 ss
+			PC += 1;
+		}
+		else
+			ram[HL] = LOBYTE(HL);		// LD (HL),L	75
 		break;
 	case 0x76:
 		break;
 	case 0x77:
+		if(prefix == 0xDD)
+		{
+			ram[IX + (__int8)ram[PC]] = HIBYTE(AF);		// LD (IX+s),A		DD 77 ss
+			PC += 1;
+		}
+		else if (prefix == 0xFD)
+		{
+			ram[IY + (__int8)ram[PC]] = HIBYTE(AF);		// LD (IY+s),A		FD 77 ss
+			PC += 1;
+		}
+		else
+			ram[HL] = HIBYTE(AF);		// LD (HL),A	77
 		break;
 	case 0x78:		// LD A,B	78
 		LD8HI(AF, HIBYTE(BC));
@@ -661,9 +900,15 @@ void CPU::Processing_70_7F(unsigned __int8 opcode, unsigned __int8 prefix)
 		break;
 	case 0x7E:
 		if (prefix == 0xDD)
-			LD8HI(AF, ram[IX + ram[PC++]]);		// LD A,(IX+s)	DD 7E ss
+		{
+			LD8HI(AF, ram[IX + (__int8)ram[PC]]);		// LD A,(IX+s)	DD 7E ss
+			PC += 1;
+		}
 		else if (prefix == 0xFD)
-			LD8HI(AF, ram[IY + ram[PC++]]);		// LD A,(IY+s)	FD 7E ss
+		{
+			LD8HI(AF, ram[IY + (__int8)ram[PC]]);		// LD A,(IY+s)	FD 7E ss
+			PC += 1;
+		}
 		else
 			LD8HI(AF, ram[HL]);					// LD A,(HL)	7E
 		break;
@@ -849,6 +1094,7 @@ void CPU::Processing_C0_CF(unsigned __int8 opcode, unsigned __int8 prefix)
 	case 0xC2:
 		break;
 	case 0xC3:
+		PC = (ram[PC] + 256 * ram[PC + 1]);		// JP NN	C3 NN NN
 		break;
 	case 0xC4:
 		break;
@@ -931,7 +1177,19 @@ void CPU::Processing_E0_EF(unsigned __int8 opcode, unsigned __int8 prefix)
 		break;
 	case 0xE2:
 		break;
-	case 0xE3:
+	case 0xE3:		// EX (SP),HL	E3
+		if (prefix == 0xDD)
+		{
+			EX16((unsigned __int16&)ram[SP], IX);
+		}
+		else if (prefix == 0xFD)
+		{
+			EX16((unsigned __int16&)ram[SP], IY);
+		}
+		else
+		{
+			EX16((unsigned __int16&)ram[SP], HL);
+		}
 		break;
 	case 0xE4:
 		break;
@@ -944,6 +1202,12 @@ void CPU::Processing_E0_EF(unsigned __int8 opcode, unsigned __int8 prefix)
 	case 0xE8:
 		break;
 	case 0xE9:
+		if (prefix == 0xDD)
+			PC = IX;				// JP (IX)	DD E9
+		else if (prefix == 0xFD)
+			PC = IY;				// JP (IY)	FD E9
+		else
+			PC = HL;				// JP (HL)	E9
 		break;
 	case 0xEA:
 		break;

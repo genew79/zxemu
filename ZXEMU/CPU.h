@@ -21,6 +21,7 @@ public:
 	unsigned __int16 _BC;
 	unsigned __int16 _DE;
 	unsigned __int16 _HL;
+	bool IFF2;
 public:
 	CPU(unsigned __int8 *pram);
 	~CPU();
@@ -48,4 +49,5 @@ public:
 	static void LD8HI(unsigned __int16& reg, unsigned __int8 val);
 	static void EX16(unsigned __int16& reg1, unsigned __int16& reg2);
 	void EXX();
+	void Stop(unsigned __int8 opcode);
 };

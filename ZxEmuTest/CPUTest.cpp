@@ -64,7 +64,7 @@ namespace ZxEmuTest
 			Assert::IsTrue(reg == 0xAACC);
 		}
 
-		TEST_METHOD(Test0x01)	// LD BC,NN 01 NN NN
+		TEST_METHOD(Test0x01)	// LD BC,NN		01 NN NN
 		{
 			mem[0] = 0x01;
 			mem[1] = 0x34;
@@ -74,36 +74,65 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 3);
 		}
 
-		TEST_METHOD(Test0x06)	// LD B,N 06 NN
+		TEST_METHOD(Test0x02)	// LD (BC),A	02
+		{
+			mem[0] = 0x02;
+			mem[0xABCD] = 0x00;
+			cpu->AF = 0x12EE;
+			cpu->BC = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(mem[0xABCD] == 0x12, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x03)	// INC BC	03
+		{
+			mem[0] = 0x03;
+			cpu->BC = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->BC == 0xABCE, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x06)	// LD B,N	06 NN
 		{
 			mem[0] = 0x06;
 			mem[1] = 0x12;
 			cpu->BC = 0x0034;
 			cpu->Step();
-			Assert::IsTrue(cpu->BC == 0x1234);
-			Assert::IsTrue(cpu->PC == 2);
+			Assert::IsTrue(cpu->BC == 0x1234, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
 		}
 
-		TEST_METHOD(Test0x08)	// EX AF, A'F' 08
+		TEST_METHOD(Test0x08)	// EX AF, A'F'		08
 		{
 			mem[0] = 0x08;
 			cpu->AF = 0x1234;
 			cpu->_AF = 0x5678;
 			cpu->Step();
-			Assert::IsTrue(cpu->AF == 0x5678);
-			Assert::IsTrue(cpu->_AF == 0x1234);
-			Assert::IsTrue(cpu->PC == 1);
+			Assert::IsTrue(cpu->AF == 0x5678, L"Memory wrong");
+			Assert::IsTrue(cpu->_AF == 0x1234, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
 		}
 
-		TEST_METHOD(Test0x0A)	// LD A,(BC)
+		TEST_METHOD(Test0x0A)	// LD A,(BC)	0A
 		{
 			mem[0] = 0x0A;
 			mem[1] = 0xDD;
 			cpu->AF = 0x00EE;
 			cpu->BC = 0x0001;
 			cpu->Step();
-			Assert::IsTrue(cpu->AF == 0xDDEE);
-			Assert::IsTrue(cpu->PC == 1);
+			Assert::IsTrue(cpu->AF == 0xDDEE, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x0B)	// DEC BC	0B
+		{
+			mem[0] = 0x0B;
+			cpu->BC = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->BC == 0xABCC, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0x0E)	// LD C,N	0E NN
@@ -112,8 +141,8 @@ namespace ZxEmuTest
 			mem[1] = 0xDD;
 			cpu->BC = 0xCC00;
 			cpu->Step();
-			Assert::IsTrue(cpu->BC == 0xCCDD);
-			Assert::IsTrue(cpu->PC == 2);
+			Assert::IsTrue(cpu->BC == 0xCCDD, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0x11)	// LD DE,NN		11 NN NN
@@ -123,8 +152,28 @@ namespace ZxEmuTest
 			mem[2] = 0x12;
 			cpu->DE = 0x0000;
 			cpu->Step();
-			Assert::IsTrue(cpu->DE == 0x1234);
-			Assert::IsTrue(cpu->PC == 3);
+			Assert::IsTrue(cpu->DE == 0x1234, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x12)	// LD (DE),A	12
+		{
+			mem[0] = 0x12;
+			mem[0xABCD] = 0x00;
+			cpu->AF = 0x12EE;
+			cpu->DE = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(mem[0xABCD] == 0x12, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x13)	// INC DE	13
+		{
+			mem[0] = 0x13;
+			cpu->DE = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->DE == 0xABCE, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0x16)	// LD D,N	16 NN
@@ -133,19 +182,39 @@ namespace ZxEmuTest
 			mem[1] = 0x12;
 			cpu->DE = 0x0034;
 			cpu->Step();
-			Assert::IsTrue(cpu->DE == 0x1234);
-			Assert::IsTrue(cpu->PC == 2);
+			Assert::IsTrue(cpu->DE == 0x1234, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
 		}
 
-		TEST_METHOD(Test0x1A)	// LD A,(DE)
+		TEST_METHOD(Test0x18)	// JR s		18 ss
+		{
+			mem[0] = 0x18;
+			mem[1] = (__int8)127;
+			cpu->Step();
+			Assert::AreEqual<__int16>(129, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			mem[1] = (__int8)-128;
+			cpu->Step();
+			Assert::AreEqual<__int16>(-126, cpu->PC, L"PC wrong");
+		}
+		TEST_METHOD(Test0x1A)	// LD A,(DE)	1A
 		{
 			mem[0] = 0x1A;
 			mem[1] = 0xDD;
 			cpu->AF = 0x00EE;
 			cpu->DE = 0x0001;
 			cpu->Step();
-			Assert::IsTrue(cpu->AF == 0xDDEE);
-			Assert::IsTrue(cpu->PC == 1);
+			Assert::IsTrue(cpu->AF == 0xDDEE, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x1B)	// DEC DE	1B
+		{
+			mem[0] = 0x1B;
+			cpu->DE = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->DE == 0xABCC, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0x1E)	// LD E,N	1E NN
@@ -154,8 +223,8 @@ namespace ZxEmuTest
 			mem[1] = 0xDD;
 			cpu->DE = 0xCC00;
 			cpu->Step();
-			Assert::IsTrue(cpu->DE == 0xCCDD);
-			Assert::IsTrue(cpu->PC == 2);
+			Assert::IsTrue(cpu->DE == 0xCCDD, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0x21)	// LD HL, NN	21 NN NN
@@ -165,8 +234,8 @@ namespace ZxEmuTest
 			mem[2] = 0x12;
 			cpu->HL = 0x0000;
 			cpu->Step();
-			Assert::IsTrue(cpu->HL == 0x1234);
-			Assert::IsTrue(cpu->PC == 3);
+			Assert::IsTrue(cpu->HL == 0x1234, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0xDD21)	// LD IX, NN	DD 21 NN NN
@@ -177,8 +246,8 @@ namespace ZxEmuTest
 			mem[3] = 0x12;
 			cpu->IX = 0x0000;
 			cpu->Step();
-			Assert::IsTrue(cpu->IX == 0x1234);
-			Assert::IsTrue(cpu->PC == 4);
+			Assert::IsTrue(cpu->IX == 0x1234, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0xFD21)	// LD IY, NN	FD 21 NN NN
@@ -189,8 +258,78 @@ namespace ZxEmuTest
 			mem[3] = 0x12;
 			cpu->IY = 0x0000;
 			cpu->Step();
-			Assert::IsTrue(cpu->IY == 0x1234);
-			Assert::IsTrue(cpu->PC == 4);
+			Assert::IsTrue(cpu->IY == 0x1234, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x22)	// LD (NN),HL	22 NN NN
+		{
+			mem[0] = 0x22;
+			mem[1] = 0xCD;
+			mem[2] = 0xAB;
+			mem[0xABCD + 0] = 0x00;
+			mem[0xABCD + 1] = 0x00;
+			cpu->HL = 0x1234;
+			cpu->Step();
+			Assert::IsTrue(mem[0xABCD] == 0x34 && mem[0xABCD + 1] == 0x12, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDD22)	// LD (NN),IX	DD 22 NN NN
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x22;
+			mem[2] = 0xCD;
+			mem[3] = 0xAB;
+			mem[0xABCD + 0] = 0x00;
+			mem[0xABCD + 1] = 0x00;
+			cpu->IX = 0x1234;
+			cpu->Step();
+			Assert::IsTrue(mem[0xABCD] == 0x34 && mem[0xABCD + 1] == 0x12, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFD22)	// LD (NN),IY	FD 22 NN NN
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x22;
+			mem[2] = 0xCD;
+			mem[3] = 0xAB;
+			mem[0xABCD + 0] = 0x00;
+			mem[0xABCD + 1] = 0x00;
+			cpu->IY = 0x1234;
+			cpu->Step();
+			Assert::IsTrue(mem[0xABCD] == 0x34 && mem[0xABCD + 1] == 0x12, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x23)	// INC HL	23
+		{
+			mem[0] = 0x23;
+			cpu->HL = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->HL == 0xABCE, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDD23)	// INC IX	DD 23
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x23;
+			cpu->IX = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->IX == 0xABCE, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFD23)	// INC IY	FD 23
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x23;
+			cpu->IY = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->IY == 0xABCE, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0x26)	// LD H,N	26 NN
@@ -261,6 +400,35 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 4);
 		}
 
+		TEST_METHOD(Test0x2B)	// DEC HL	2B
+		{
+			mem[0] = 0x2B;
+			cpu->HL = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->HL == 0xABCC, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDD2B)	// DEC IX	DD 2B
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x2B;
+			cpu->IX = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->IX == 0xABCC, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFD2B)	// DEC IY	FD 2B
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x2B;
+			cpu->IY = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->IY == 0xABCC, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
 		TEST_METHOD(Test0x2E)	// LD L,N	2E NN
 		{
 			mem[0] = 0x2E;
@@ -300,6 +468,76 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 3);
 		}
 
+		TEST_METHOD(Test0x32)	// LD (NN),A	32 NN NN
+		{
+			mem[0] = 0x32;
+			mem[1] = 0xCD;
+			mem[2] = 0xAB;
+			mem[0xABCD] = 0x00;
+			cpu->AF = 0xEF00;
+			cpu->Step();
+			Assert::IsTrue(mem[0xABCD] == 0xEF);
+			Assert::IsTrue(cpu->PC == 3);
+		}
+
+		TEST_METHOD(Test0x33)	// INC SP	33
+		{
+			mem[0] = 0x33;
+			cpu->SP = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->SP == 0xABCE, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x36)	// LD (HL),N	36
+		{
+			mem[0] = 0x36;
+			mem[1] = 0x12;
+			mem[0xABCD] = 0x00;
+			cpu->HL = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(mem[0xABCD] == 0x12, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDD36)	// LD (IX+s),N		DD 36 ss NN
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x36;
+			mem[2] = (__int8)127;
+			cpu->IX = 0xA000;
+			mem[cpu->IX + 127] = 0x00;
+			mem[3] = 0x12;
+			cpu->Step();
+			Assert::IsTrue(mem[0xA000 + 127] == 0x12, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+			mem[2] = (__int8)-128;
+			mem[cpu->IX - 128] = 0x00;
+			cpu->PC = 0;
+			cpu->Step();
+			Assert::IsTrue(mem[0xA000 - 128] == 0x12, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFD36)	// LD (IY+s),N		FD 36 ss NN
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x36;
+			mem[2] = (__int8)127;
+			cpu->IY = 0xA000;
+			mem[cpu->IY + 127] = 0x00;
+			mem[3] = 0x12;
+			cpu->Step();
+			Assert::IsTrue(mem[0xA000 + 127] == 0x12, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+			mem[2] = (__int8)-128;
+			mem[cpu->IY - 128] = 0x00;
+			cpu->PC = 0;
+			cpu->Step();
+			Assert::IsTrue(mem[0xA000 - 128] == 0x12, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+		}
+
 		TEST_METHOD(Test0x3A)	// LD A,(NN)	3A NN NN
 		{
 			mem[0] = 0x3A;
@@ -309,6 +547,15 @@ namespace ZxEmuTest
 			cpu->Step();
 			Assert::IsTrue(cpu->AF == 0xEF00);
 			Assert::IsTrue(cpu->PC == 3);
+		}
+
+		TEST_METHOD(Test0x3B)	// DEC SP	3B
+		{
+			mem[0] = 0x3B;
+			cpu->SP = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->SP == 0xABCC, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0x3E)	// LD A,N	3E NN
@@ -345,6 +592,20 @@ namespace ZxEmuTest
 			cpu->Step();
 			Assert::IsTrue(cpu->BC == 0xCD00);
 			Assert::IsTrue(cpu->PC == 1);
+		}
+
+		TEST_METHOD(Test0xED43)	// LD (NN),BC	ED 43 NN NN
+		{
+			mem[0] = 0xED;
+			mem[1] = 0x43;
+			mem[2] = 0xCD;
+			mem[3] = 0xAB;
+			mem[0xABCD + 0] = 0x00;
+			mem[0xABCD + 1] = 0x00;
+			cpu->BC = 0x1234;
+			cpu->Step();
+			Assert::IsTrue(mem[0xABCD] == 0x34 && mem[0xABCD + 1] == 0x12, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0x44)	// LD B,H	44
@@ -405,7 +666,7 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 2);
 		}
 
-		TEST_METHOD(Test0x46)	// LD B,(HL)
+		TEST_METHOD(Test0x46)	// LD B,(HL)	46
 		{
 			mem[0] = 0x46;
 			mem[1] = 0xDD;
@@ -420,26 +681,40 @@ namespace ZxEmuTest
 		{
 			mem[0] = 0xDD;
 			mem[1] = 0x46;
-			mem[2] = 0x03;
-			mem[3] = 0xDD;
-			cpu->BC = 0x00EE;
-			cpu->IX = 0x0000;
+			mem[2] = (__int8)127;
+			cpu->IX = 0xA000;
+			mem[cpu->IX + 127] = 0xDD;
+			cpu->BC = 0x0000;
 			cpu->Step();
-			Assert::IsTrue(cpu->BC == 0xDDEE);
-			Assert::IsTrue(cpu->PC == 3);
+			Assert::IsTrue(cpu->BC == 0xDD00, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = (__int8)-128;
+			mem[cpu->IX - 128] = 0xDD;
+			cpu->BC = 0x0000;
+			cpu->Step();
+			Assert::IsTrue(cpu->BC == 0xDD00, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0xFD46)	// LD B,(IY+s)	FD 46 ss
 		{
 			mem[0] = 0xFD;
 			mem[1] = 0x46;
-			mem[2] = 0x03;
-			mem[3] = 0xDD;
-			cpu->BC = 0x00EE;
-			cpu->IY = 0x0000;
+			mem[2] = (__int8)127;
+			cpu->IY = 0xA000;
+			mem[cpu->IY + 127] = 0xDD;
+			cpu->BC = 0x0000;
 			cpu->Step();
-			Assert::IsTrue(cpu->BC == 0xDDEE);
-			Assert::IsTrue(cpu->PC == 3);
+			Assert::IsTrue(cpu->BC == 0xDD00, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = (__int8)-128;
+			mem[cpu->IY - 128] = 0xDD;
+			cpu->BC = 0x0000;
+			cpu->Step();
+			Assert::IsTrue(cpu->BC == 0xDD00, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0x47)	// LD B,A	47
@@ -559,7 +834,7 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 2);
 		}
 
-		TEST_METHOD(Test0x4E)	// LD C,(HL)
+		TEST_METHOD(Test0x4E)	// LD C,(HL)	4E
 		{
 			mem[0] = 0x4E;
 			mem[1] = 0xDD;
@@ -574,26 +849,40 @@ namespace ZxEmuTest
 		{
 			mem[0] = 0xDD;
 			mem[1] = 0x4E;
-			mem[2] = 0x03;
-			mem[3] = 0xDD;
-			cpu->BC = 0xEE00;
-			cpu->IX = 0x0000;
+			mem[2] = (__int8)127;
+			cpu->IX = 0xA000;
+			mem[cpu->IX + 127] = 0xDD;
+			cpu->BC = 0x0000;
 			cpu->Step();
-			Assert::IsTrue(cpu->BC == 0xEEDD);
-			Assert::IsTrue(cpu->PC == 3);
+			Assert::IsTrue(cpu->BC == 0x00DD, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = (__int8)-128;
+			mem[cpu->IX - 128] = 0xDD;
+			cpu->BC = 0x0000;
+			cpu->Step();
+			Assert::IsTrue(cpu->BC == 0x00DD, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0xFD4E)	// LD C,(IY+s)	FD 4E ss
 		{
 			mem[0] = 0xFD;
 			mem[1] = 0x4E;
-			mem[2] = 0x03;
-			mem[3] = 0xDD;
-			cpu->BC = 0xEE00;
-			cpu->IY = 0x0000;
+			mem[2] = (__int8)127;
+			cpu->IY = 0xA000;
+			mem[cpu->IY + 127] = 0xDD;
+			cpu->BC = 0x0000;
 			cpu->Step();
-			Assert::IsTrue(cpu->BC == 0xEEDD);
-			Assert::IsTrue(cpu->PC == 3);
+			Assert::IsTrue(cpu->BC == 0x00DD, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = (__int8)-128;
+			mem[cpu->IY - 128] = 0xDD;
+			cpu->BC = 0x0000;
+			cpu->Step();
+			Assert::IsTrue(cpu->BC == 0x00DD, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0x4F)	// LD C,A	4F
@@ -640,6 +929,20 @@ namespace ZxEmuTest
 			cpu->Step();
 			Assert::IsTrue(cpu->DE == 0xCDCD);
 			Assert::IsTrue(cpu->PC == 1);
+		}
+
+		TEST_METHOD(Test0xED53)	// LD (NN),DE	ED 53 NN NN
+		{
+			mem[0] = 0xED;
+			mem[1] = 0x53;
+			mem[2] = 0xCD;
+			mem[3] = 0xAB;
+			mem[0xABCD + 0] = 0x00;
+			mem[0xABCD + 1] = 0x00;
+			cpu->DE = 0x1234;
+			cpu->Step();
+			Assert::IsTrue(mem[0xABCD] == 0x34 && mem[0xABCD + 1] == 0x12, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0x54)	// LD D,H	54
@@ -700,7 +1003,7 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 2);
 		}
 
-		TEST_METHOD(Test0x56)	// LD D,(HL)
+		TEST_METHOD(Test0x56)	// LD D,(HL)	56
 		{
 			mem[0] = 0x56;
 			mem[1] = 0xDD;
@@ -715,26 +1018,40 @@ namespace ZxEmuTest
 		{
 			mem[0] = 0xDD;
 			mem[1] = 0x56;
-			mem[2] = 0x03;
-			mem[3] = 0xDD;
-			cpu->DE = 0x00EE;
-			cpu->IX = 0x0000;
+			mem[2] = (__int8)127;
+			cpu->IX = 0xA000;
+			mem[cpu->IX + 127] = 0xDD;
+			cpu->DE = 0x0000;
 			cpu->Step();
-			Assert::IsTrue(cpu->DE == 0xDDEE);
-			Assert::IsTrue(cpu->PC == 3);
+			Assert::IsTrue(cpu->DE == 0xDD00, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = (__int8)-128;
+			mem[cpu->IX - 128] = 0xDD;
+			cpu->DE = 0x0000;
+			cpu->Step();
+			Assert::IsTrue(cpu->DE == 0xDD00, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0xFD56)	// LD D,(IY+s)	FD 56 ss
 		{
 			mem[0] = 0xFD;
 			mem[1] = 0x56;
-			mem[2] = 0x03;
-			mem[3] = 0xDD;
-			cpu->DE = 0x00EE;
-			cpu->IY = 0x0000;
+			mem[2] = (__int8)127;
+			cpu->IY = 0xA000;
+			mem[cpu->IY + 127] = 0xDD;
+			cpu->DE = 0x0000;
 			cpu->Step();
-			Assert::IsTrue(cpu->DE == 0xDDEE);
-			Assert::IsTrue(cpu->PC == 3);
+			Assert::IsTrue(cpu->DE == 0xDD00, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = (__int8)-128;
+			mem[cpu->IY - 128] = 0xDD;
+			cpu->DE = 0x0000;
+			cpu->Step();
+			Assert::IsTrue(cpu->DE == 0xDD00, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0x57)	// LD D,A	57
@@ -750,9 +1067,12 @@ namespace ZxEmuTest
 		{
 			mem[0] = 0xED;
 			mem[1] = 0x57;
-			cpu->IR = 0xABCD;
+			cpu->AF = 0x1100;
+			cpu->IR = 0x00CD;
+			cpu->IFF2 = true;
 			cpu->Step();
-			Assert::IsTrue(cpu->AF == 0xAB00);
+			Assert::IsTrue(HIBYTE(cpu->AF) == 0x00);
+			Assert::IsTrue(LOBYTE(cpu->AF) == 0b01000100);
 			Assert::IsTrue(cpu->PC == 2);
 		}
 
@@ -854,7 +1174,7 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 2);
 		}
 
-		TEST_METHOD(Test0x5E)	// LD E,(HL)
+		TEST_METHOD(Test0x5E)	// LD E,(HL)	5E
 		{
 			mem[0] = 0x5E;
 			mem[1] = 0xDD;
@@ -863,6 +1183,46 @@ namespace ZxEmuTest
 			cpu->Step();
 			Assert::IsTrue(cpu->DE == 0xEEDD);
 			Assert::IsTrue(cpu->PC == 1);
+		}
+
+		TEST_METHOD(Test0xDD5E)	// LD E,(IX+s)	DD 5E ss
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x5E;
+			mem[2] = (__int8)127;
+			cpu->IX = 0xA000;
+			mem[cpu->IX + 127] = 0xDD;
+			cpu->DE = 0x0000;
+			cpu->Step();
+			Assert::IsTrue(cpu->DE == 0x00DD, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = (__int8)-128;
+			mem[cpu->IX - 128] = 0xDD;
+			cpu->DE = 0x0000;
+			cpu->Step();
+			Assert::IsTrue(cpu->DE == 0x00DD, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFD5E)	// LD E,(IY+s)	FD 5E ss
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x5E;
+			mem[2] = (__int8)127;
+			cpu->IY = 0xA000;
+			mem[cpu->IY + 127] = 0xDD;
+			cpu->DE = 0x0000;
+			cpu->Step();
+			Assert::IsTrue(cpu->DE == 0x00DD, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = (__int8)-128;
+			mem[cpu->IY - 128] = 0xDD;
+			cpu->DE = 0x0000;
+			cpu->Step();
+			Assert::IsTrue(cpu->DE == 0x00DD, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0x5F)	// LD E,A	5F
@@ -878,9 +1238,12 @@ namespace ZxEmuTest
 		{
 			mem[0] = 0xED;
 			mem[1] = 0x5F;
-			cpu->IR = 0xABCD;
+			cpu->AF = 0x1100;
+			cpu->IR = 0xAB00;
+			cpu->IFF2 = true;
 			cpu->Step();
-			Assert::IsTrue(cpu->AF == 0xCD00);
+			Assert::IsTrue(HIBYTE(cpu->AF) == 0x00);
+			Assert::IsTrue(LOBYTE(cpu->AF) == 0b01000100);
 			Assert::IsTrue(cpu->PC == 2);
 		}
 
@@ -1000,6 +1363,20 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 2);
 		}
 
+		TEST_METHOD(Test0xED63)	// LD (NN),HL	ED 63 NN NN
+		{
+			mem[0] = 0xED;
+			mem[1] = 0x63;
+			mem[2] = 0xCD;
+			mem[3] = 0xAB;
+			mem[0xABCD + 0] = 0x00;
+			mem[0xABCD + 1] = 0x00;
+			cpu->HL = 0x1234;
+			cpu->Step();
+			Assert::IsTrue(mem[0xABCD] == 0x34 && mem[0xABCD + 1] == 0x12, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+		}
+
 		TEST_METHOD(Test0x65)	// LD H,L	65
 		{
 			mem[0] = 0x65;
@@ -1029,7 +1406,7 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 2);
 		}
 
-		TEST_METHOD(Test0x66)	// LD H,(HL)
+		TEST_METHOD(Test0x66)	// LD H,(HL)	66
 		{
 			mem[0] = 0x66;
 			mem[1] = 0xDD;
@@ -1037,6 +1414,46 @@ namespace ZxEmuTest
 			cpu->Step();
 			Assert::IsTrue(cpu->HL == 0xDD01);
 			Assert::IsTrue(cpu->PC == 1);
+		}
+
+		TEST_METHOD(Test0xDD66)	// LD H,(IX+s)	DD 66 ss
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x66;
+			mem[2] = (__int8)127;
+			cpu->IX = 0xA000;
+			mem[cpu->IX + 127] = 0xDD;
+			cpu->HL = 0x0000;
+			cpu->Step();
+			Assert::IsTrue(cpu->HL == 0xDD00, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = (__int8)-128;
+			mem[cpu->IX - 128] = 0xDD;
+			cpu->HL = 0x0000;
+			cpu->Step();
+			Assert::IsTrue(cpu->HL == 0xDD00, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFD66)	// LD H,(IY+s)	FD 66 ss
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x66;
+			mem[2] = (__int8)127;
+			cpu->IY = 0xA000;
+			mem[cpu->IY + 127] = 0xDD;
+			cpu->HL = 0x0000;
+			cpu->Step();
+			Assert::IsTrue(cpu->HL == 0xDD00, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = (__int8)-128;
+			mem[cpu->IY - 128] = 0xDD;
+			cpu->HL = 0x0000;
+			cpu->Step();
+			Assert::IsTrue(cpu->HL == 0xDD00, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0x67)	// LD H,A	67
@@ -1226,7 +1643,7 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 2);
 		}
 
-		TEST_METHOD(Test0x6E)	// LD L,(HL)
+		TEST_METHOD(Test0x6E)	// LD L,(HL)	6E
 		{
 			mem[0] = 0x6E;
 			mem[1] = 0xDD;
@@ -1234,6 +1651,46 @@ namespace ZxEmuTest
 			cpu->Step();
 			Assert::IsTrue(cpu->HL == 0x00DD);
 			Assert::IsTrue(cpu->PC == 1);
+		}
+
+		TEST_METHOD(Test0xDD6E)	// LD L,(IX+s)	DD 6E ss
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x6E;
+			mem[2] = (__int8)127;
+			cpu->IX = 0xA000;
+			mem[cpu->IX + 127] = 0xDD;
+			cpu->HL = 0x0000;
+			cpu->Step();
+			Assert::IsTrue(cpu->HL == 0x00DD, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = (__int8)-128;
+			mem[cpu->IX - 128] = 0xDD;
+			cpu->HL = 0x0000;
+			cpu->Step();
+			Assert::IsTrue(cpu->HL == 0x00DD, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFD6E)	// LD L,(IY+s)	FD 6E ss
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x6E;
+			mem[2] = (__int8)127;
+			cpu->IY = 0xA000;
+			mem[cpu->IY + 127] = 0xDD;
+			cpu->HL = 0x0000;
+			cpu->Step();
+			Assert::IsTrue(cpu->HL == 0x00DD, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = (__int8)-128;
+			mem[cpu->IY - 128] = 0xDD;
+			cpu->HL = 0x0000;
+			cpu->Step();
+			Assert::IsTrue(cpu->HL == 0x00DD, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0x6F)	// LD L,A	6F
@@ -1263,6 +1720,361 @@ namespace ZxEmuTest
 			cpu->Step();
 			Assert::IsTrue(cpu->IY == 0x00AB);
 			Assert::IsTrue(cpu->PC == 2);
+		}
+
+		TEST_METHOD(Test0x70)	// LD (HL),B	70
+		{
+			mem[0] = 0x70;
+			mem[0xABCD] = 0x00;
+			cpu->BC = 0x1234;
+			cpu->HL = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(mem[0xABCD] == 0x12, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDD70)	// LD (IX+s),B	DD 70 ss
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x70;
+			mem[2] = (__int8)127;
+			cpu->IX = 0xA000;
+			mem[cpu->IX + 127] = 0x00;
+			cpu->BC = 0x1234;
+			cpu->Step();
+			Assert::IsTrue(mem[0xA000 + 127] == 0x12, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			mem[2] = (__int8)-128;
+			mem[cpu->IX - 128] = 0x00;
+			cpu->PC = 0;
+			cpu->Step();
+			Assert::IsTrue(mem[0xA000 - 128] == 0x12, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFD70)	// LD (IY+s),B	FD 70 ss
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x70;
+			mem[2] = (__int8)127;
+			cpu->IY = 0xA000;
+			mem[cpu->IY + 127] = 0x00;
+			cpu->BC = 0x1234;
+			cpu->Step();
+			Assert::IsTrue(mem[0xA000 + 127] == 0x12, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			mem[2] = (__int8)-128;
+			mem[cpu->IY - 128] = 0x00;
+			cpu->PC = 0;
+			cpu->Step();
+			Assert::IsTrue(mem[0xA000 - 128] == 0x12, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x71)	// LD (HL),C	71
+		{
+			mem[0] = 0x71;
+			mem[0xABCD] = 0x00;
+			cpu->BC = 0x1234;
+			cpu->HL = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(mem[0xABCD] == 0x34, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDD71)	// LD (IX+s),C	DD 71 ss
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x71;
+			mem[2] = (__int8)127;
+			cpu->IX = 0xA000;
+			mem[cpu->IX + 127] = 0x00;
+			cpu->BC = 0x1234;
+			cpu->Step();
+			Assert::IsTrue(mem[0xA000 + 127] == 0x34, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			mem[2] = (__int8)-128;
+			mem[cpu->IX - 128] = 0x00;
+			cpu->PC = 0;
+			cpu->Step();
+			Assert::IsTrue(mem[0xA000 - 128] == 0x34, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFD71)	// LD (IY+s),C	FD 71 ss
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x71;
+			mem[2] = (__int8)127;
+			cpu->IY = 0xA000;
+			mem[cpu->IY + 127] = 0x00;
+			cpu->BC = 0x1234;
+			cpu->Step();
+			Assert::IsTrue(mem[0xA000 + 127] == 0x34, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			mem[2] = (__int8)-128;
+			mem[cpu->IY - 128] = 0x00;
+			cpu->PC = 0;
+			cpu->Step();
+			Assert::IsTrue(mem[0xA000 - 128] == 0x34, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x72)	// LD (HL),D	72
+		{
+			mem[0] = 0x72;
+			mem[0xABCD] = 0x00;
+			cpu->DE = 0x1234;
+			cpu->HL = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(mem[0xABCD] == 0x12, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDD72)	// LD (IX+s),D	DD 72 ss
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x72;
+			mem[2] = (__int8)127;
+			cpu->IX = 0xA000;
+			mem[cpu->IX + 127] = 0x00;
+			cpu->DE = 0x1234;
+			cpu->Step();
+			Assert::IsTrue(mem[0xA000 + 127] == 0x12, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			mem[2] = (__int8)-128;
+			mem[cpu->IX - 128] = 0x00;
+			cpu->PC = 0;
+			cpu->Step();
+			Assert::IsTrue(mem[0xA000 - 128] == 0x12, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFD72)	// LD (IY+s),D	FD 72 ss
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x72;
+			mem[2] = (__int8)127;
+			cpu->IY = 0xA000;
+			mem[cpu->IY + 127] = 0x00;
+			cpu->DE = 0x1234;
+			cpu->Step();
+			Assert::IsTrue(mem[0xA000 + 127] == 0x12, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			mem[2] = (__int8)-128;
+			mem[cpu->IY - 128] = 0x00;
+			cpu->PC = 0;
+			cpu->Step();
+			Assert::IsTrue(mem[0xA000 - 128] == 0x12, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x73)	// LD (HL),E	73
+		{
+			mem[0] = 0x73;
+			mem[0xABCD] = 0x00;
+			cpu->DE = 0x1234;
+			cpu->HL = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(mem[0xABCD] == 0x34, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDD73)	// LD (IX+s),E	DD 73 ss
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x73;
+			mem[2] = (__int8)127;
+			cpu->IX = 0xA000;
+			mem[cpu->IX + 127] = 0x00;
+			cpu->DE = 0x1234;
+			cpu->Step();
+			Assert::IsTrue(mem[0xA000 + 127] == 0x34, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			mem[2] = (__int8)-128;
+			mem[cpu->IX - 128] = 0x00;
+			cpu->PC = 0;
+			cpu->Step();
+			Assert::IsTrue(mem[0xA000 - 128] == 0x34, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFD73)	// LD (IY+s),E	FD 73 ss
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x73;
+			mem[2] = (__int8)127;
+			cpu->IY = 0xA000;
+			mem[cpu->IY + 127] = 0x00;
+			cpu->DE = 0x1234;
+			cpu->Step();
+			Assert::IsTrue(mem[0xA000 + 127] == 0x34, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			mem[2] = (__int8)-128;
+			mem[cpu->IY - 128] = 0x00;
+			cpu->PC = 0;
+			cpu->Step();
+			Assert::IsTrue(mem[0xA000 - 128] == 0x34, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xED73)	// LD (NN),SP	ED 73 NN NN
+		{
+			mem[0] = 0xED;
+			mem[1] = 0x73;
+			mem[2] = 0xCD;
+			mem[3] = 0xAB;
+			mem[0xABCD + 0] = 0x00;
+			mem[0xABCD + 1] = 0x00;
+			cpu->SP = 0x1234;
+			cpu->Step();
+			Assert::IsTrue(mem[0xABCD] == 0x34 && mem[0xABCD + 1] == 0x12, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x74)	// LD (HL),H	74
+		{
+			mem[0] = 0x74;
+			mem[0xABCD] = 0x00;
+			cpu->HL = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(mem[0xABCD] == 0xAB, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDD74)	// LD (IX+s),H	DD 74 ss
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x74;
+			mem[2] = (__int8)127;
+			cpu->IX = 0xA000;
+			mem[cpu->IX + 127] = 0x00;
+			cpu->HL = 0x1234;
+			cpu->Step();
+			Assert::IsTrue(mem[0xA000 + 127] == 0x12, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			mem[2] = (__int8)-128;
+			mem[cpu->IX - 128] = 0x00;
+			cpu->PC = 0;
+			cpu->Step();
+			Assert::IsTrue(mem[0xA000 - 128] == 0x12, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFD74)	// LD (IY+s),H	FD 74 ss
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x74;
+			mem[2] = (__int8)127;
+			cpu->IY = 0xA000;
+			mem[cpu->IY + 127] = 0x00;
+			cpu->HL = 0x1234;
+			cpu->Step();
+			Assert::IsTrue(mem[0xA000 + 127] == 0x12, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			mem[2] = (__int8)-128;
+			mem[cpu->IY - 128] = 0x00;
+			cpu->PC = 0;
+			cpu->Step();
+			Assert::IsTrue(mem[0xA000 - 128] == 0x12, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x75)	// LD (HL),L	75
+		{
+			mem[0] = 0x75;
+			mem[0xABCD] = 0x00;
+			cpu->HL = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(mem[0xABCD] == 0xCD, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDD75)	// LD (IX+s),L	DD 75 ss
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x75;
+			mem[2] = (__int8)127;
+			cpu->IX = 0xA000;
+			mem[cpu->IX + 127] = 0x00;
+			cpu->HL = 0x1234;
+			cpu->Step();
+			Assert::IsTrue(mem[0xA000 + 127] == 0x34, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			mem[2] = (__int8)-128;
+			mem[cpu->IX - 128] = 0x00;
+			cpu->PC = 0;
+			cpu->Step();
+			Assert::IsTrue(mem[0xA000 - 128] == 0x34, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFD75)	// LD (IY+s),L	FD 75 ss
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x75;
+			mem[2] = (__int8)127;
+			cpu->IY = 0xA000;
+			mem[cpu->IY + 127] = 0x00;
+			cpu->HL = 0x1234;
+			cpu->Step();
+			Assert::IsTrue(mem[0xA000 + 127] == 0x34, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			mem[2] = (__int8)-128;
+			mem[cpu->IY - 128] = 0x00;
+			cpu->PC = 0;
+			cpu->Step();
+			Assert::IsTrue(mem[0xA000 - 128] == 0x34, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x77)	// LD (HL),A	77
+		{
+			mem[0] = 0x77;
+			mem[0xABCD] = 0x00;
+			cpu->AF = 0x12EE;
+			cpu->HL = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(mem[0xABCD] == 0x12, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDD77)	// LD (IX+s),A	DD 77 ss
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x77;
+			mem[2] = (__int8)127;
+			cpu->IX = 0xA000;
+			mem[cpu->IX + 127] = 0x00;
+			cpu->AF = 0x12EE;
+			cpu->Step();
+			Assert::IsTrue(mem[0xA000 + 127] == 0x12, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			mem[2] = (__int8)-128;
+			mem[cpu->IX - 128] = 0x00;
+			cpu->PC = 0;
+			cpu->Step();
+			Assert::IsTrue(mem[0xA000 - 128] == 0x12, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFD77)	// LD (IY+s),A	FD 77 ss
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x77;
+			mem[2] = (__int8)127;
+			cpu->IY = 0xA000;
+			mem[cpu->IY + 127] = 0x00;
+			cpu->AF = 0x12EE;
+			cpu->Step();
+			Assert::IsTrue(mem[0xA000 + 127] == 0x12, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			mem[2] = (__int8)-128;
+			mem[cpu->IY - 128] = 0x00;
+			cpu->PC = 0;
+			cpu->Step();
+			Assert::IsTrue(mem[0xA000 - 128] == 0x12, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0x78)	// LD A,B	78
@@ -1342,7 +2154,7 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 1);
 		}
 
-		TEST_METHOD(Test0x7E)	// LD A,(HL)
+		TEST_METHOD(Test0x7E)	// LD A,(HL)	7E
 		{
 			mem[0] = 0x7E;
 			mem[1] = 0xDD;
@@ -1357,26 +2169,40 @@ namespace ZxEmuTest
 		{
 			mem[0] = 0xDD;
 			mem[1] = 0x7E;
-			mem[2] = 0x03;
-			mem[3] = 0xDD;
+			mem[2] = (__int8)127;
+			cpu->IX = 0xA000;
+			mem[cpu->IX + 127] = 0xDD;
 			cpu->AF = 0x00EE;
-			cpu->IX = 0x0000;
 			cpu->Step();
-			Assert::IsTrue(cpu->AF == 0xDDEE);
-			Assert::IsTrue(cpu->PC == 3);
+			Assert::IsTrue(cpu->AF == 0xDDEE, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = (__int8)-128;
+			mem[cpu->IX - 128] = 0xDD;
+			cpu->AF = 0x00EE;
+			cpu->Step();
+			Assert::IsTrue(cpu->AF == 0xDDEE, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0xFD7E)	// LD A,(IY+s)	FD 7E ss
 		{
 			mem[0] = 0xFD;
 			mem[1] = 0x7E;
-			mem[2] = 0x03;
-			mem[3] = 0xDD;
+			mem[2] = (__int8)127;
+			cpu->IY = 0xA000;
+			mem[cpu->IY + 127] = 0xDD;
 			cpu->AF = 0x00EE;
-			cpu->IY = 0x0000;
 			cpu->Step();
-			Assert::IsTrue(cpu->AF == 0xDDEE);
-			Assert::IsTrue(cpu->PC == 3);
+			Assert::IsTrue(cpu->AF == 0xDDEE, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = (__int8)-128;
+			mem[cpu->IY - 128] = 0xDD;
+			cpu->AF = 0x00EE;
+			cpu->Step();
+			Assert::IsTrue(cpu->AF == 0xDDEE, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0xDD7D)	// LD A,XL	DD 7D
@@ -1385,8 +2211,17 @@ namespace ZxEmuTest
 			mem[1] = 0x7D;
 			cpu->IX = 0x1234;
 			cpu->Step();
-			Assert::IsTrue(cpu->AF == 0x3400);
-			Assert::IsTrue(cpu->PC == 2);
+			Assert::IsTrue(cpu->AF == 0x3400, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xC3)	// JP NN	C3 NN NN
+		{
+			mem[0] = 0xC3;
+			mem[1] = 0xCD;
+			mem[2] = 0xAB;
+			cpu->Step();
+			Assert::IsTrue(cpu->PC == 0xABCD, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0xD9)	// EXX D9
@@ -1406,6 +2241,70 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 1);
 		}
 
+		TEST_METHOD(Test0xE3)	// EX (SP),HL	E3
+		{
+			mem[0] = 0xE3;
+			mem[0xA000] = 0x34;
+			mem[0xA001] = 0x12;
+			cpu->SP = 0xA000;
+			cpu->HL = 0x5678;
+			cpu->Step();
+			Assert::IsTrue(cpu->HL == 0x1234 && mem[0xA000] == 0x78 && mem[0xA001] == 0x56, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDDE3)	// EX (SP),IX	DD E3
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0xE3;
+			mem[0xA000] = 0x34;
+			mem[0xA001] = 0x12;
+			cpu->SP = 0xA000;
+			cpu->IX = 0x5678;
+			cpu->Step();
+			Assert::IsTrue(cpu->IX == 0x1234 && mem[0xA000] == 0x78 && mem[0xA001] == 0x56, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFDE3)	// EX (SP),IY	FD E3
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0xE3;
+			mem[0xA000] = 0x34;
+			mem[0xA001] = 0x12;
+			cpu->SP = 0xA000;
+			cpu->IY = 0x5678;
+			cpu->Step();
+			Assert::IsTrue(cpu->IY == 0x1234 && mem[0xA000] == 0x78 && mem[0xA001] == 0x56, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xE9)	// JP (HL)	E9
+		{
+			mem[0] = 0xE9;
+			cpu->HL = 0xA000;
+			cpu->Step();
+			Assert::IsTrue(cpu->PC == 0xA000, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDDE9)	// JP (IX)	DD E9
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0xE9;
+			cpu->IX = 0xA000;
+			cpu->Step();
+			Assert::IsTrue(cpu->PC == 0xA000, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFDE9)	// JP (IY)	FD E9
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0xE9;
+			cpu->IY = 0xA000;
+			cpu->Step();
+			Assert::IsTrue(cpu->PC == 0xA000, L"PC wrong");
+		}
+
 		TEST_METHOD(Test0xEB)	// EX DE,HL
 		{
 			mem[0] = 0xEB;
@@ -1414,6 +2313,38 @@ namespace ZxEmuTest
 			cpu->Step();
 			Assert::IsTrue(cpu->DE == 0x2222 && cpu->HL == 0x1111);
 			Assert::IsTrue(cpu->PC == 1);
+		}
+
+		TEST_METHOD(Test0xF9)	// LD SP,HL	F9
+		{
+			mem[0] = 0xF9;
+			cpu->SP = 0x0000;
+			cpu->HL = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->SP == 0xABCD);
+			Assert::IsTrue(cpu->PC == 1);
+		}
+
+		TEST_METHOD(Test0xDDF9)	// LD SP,IX	DD F9
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0xF9;
+			cpu->SP = 0x0000;
+			cpu->IX = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->SP == 0xABCD);
+			Assert::IsTrue(cpu->PC == 2);
+		}
+
+		TEST_METHOD(Test0xFDF9)	// LD SP,IY	FD F9
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0xF9;
+			cpu->SP = 0x0000;
+			cpu->IY = 0xABCD;
+			cpu->Step();
+			Assert::IsTrue(cpu->SP == 0xABCD);
+			Assert::IsTrue(cpu->PC == 2);
 		}
 
 
