@@ -64,6 +64,16 @@ namespace ZxEmuTest
 			Assert::IsTrue(reg == 0xAACC);
 		}
 
+		TEST_METHOD(TestAdd8)
+		{
+			auto res = cpu->Add8(0xFF, 0x01);
+			Assert::AreEqual<unsigned __int8>(0x00, res, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | HF | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			res = cpu->Add8(0x0F, 0x01);
+			Assert::AreEqual<unsigned __int8>(0x10, res, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(HF, LOBYTE(cpu->AF), L"Flags wrong");
+		}
+
 		TEST_METHOD(Test0x01)	// LD BC,NN		01 NN NN
 		{
 			mem[0] = 0x01;
@@ -94,6 +104,17 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
 		}
 
+		TEST_METHOD(Test0x04)	// INC B	04
+		{
+			mem[0] = 0x04;
+			cpu->AF = 0x0002;
+			cpu->BC = 0xFF00;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0, cpu->BC, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(HF | PF | ZF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
 		TEST_METHOD(Test0x06)	// LD B,N	06 NN
 		{
 			mem[0] = 0x06;
@@ -113,6 +134,44 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->AF == 0x5678, L"Memory wrong");
 			Assert::IsTrue(cpu->_AF == 0x1234, L"Memory wrong");
 			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x09)	// ADD HL,BC	09
+		{
+			mem[0] = 0x09;
+			cpu->AF = 0x0002;
+			cpu->HL = 0xFFFF;
+			cpu->BC = 0x0001;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0, cpu->HL, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(HF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDD09)	// ADD IX,BC	DD 09
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x09;
+			cpu->AF = 0x0002;
+			cpu->IX = 0xFFFF;
+			cpu->BC = 0x0001;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0, cpu->IX, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(HF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFD09)	// ADD IY,BC	FD 09
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x09;
+			cpu->AF = 0x0002;
+			cpu->IY = 0xFFFF;
+			cpu->BC = 0x0001;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0, cpu->IY, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(HF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0x0A)	// LD A,(BC)	0A
@@ -135,6 +194,17 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
 		}
 
+		TEST_METHOD(Test0x0C)	// INC C	0C
+		{
+			mem[0] = 0x0C;
+			cpu->AF = 0x0002;
+			cpu->BC = 0x00FF;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0, cpu->BC, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(HF | PF | ZF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
 		TEST_METHOD(Test0x0E)	// LD C,N	0E NN
 		{
 			mem[0] = 0x0E;
@@ -143,6 +213,26 @@ namespace ZxEmuTest
 			cpu->Step();
 			Assert::IsTrue(cpu->BC == 0xCCDD, L"Memory wrong");
 			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x10)	// DJNZ s		10 ss
+		{
+			mem[0] = 0x10;
+			mem[1] = (__int8)127;
+			cpu->BC = 0x0200;
+			cpu->Step();
+			Assert::AreEqual<__int16>(129, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			cpu->Step();
+			Assert::AreEqual<__int16>(2, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			mem[1] = (__int8)-128;
+			cpu->BC = 0x0200;
+			cpu->Step();
+			Assert::AreEqual<__int16>(-126, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			cpu->Step();
+			Assert::AreEqual<__int16>(2, cpu->PC, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0x11)	// LD DE,NN		11 NN NN
@@ -176,6 +266,17 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
 		}
 
+		TEST_METHOD(Test0x14)	// INC D	14
+		{
+			mem[0] = 0x14;
+			cpu->AF = 0x0002;
+			cpu->DE = 0xFF00;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0, cpu->DE, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(HF | PF | ZF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
 		TEST_METHOD(Test0x16)	// LD D,N	16 NN
 		{
 			mem[0] = 0x16;
@@ -197,6 +298,45 @@ namespace ZxEmuTest
 			cpu->Step();
 			Assert::AreEqual<__int16>(-126, cpu->PC, L"PC wrong");
 		}
+
+		TEST_METHOD(Test0x19)	// ADD HL,DE	19
+		{
+			mem[0] = 0x19;
+			cpu->AF = 0x0002;
+			cpu->HL = 0xFFFF;
+			cpu->DE = 0x0001;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0, cpu->HL, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(HF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDD19)	// ADD IX,DE	DD 19
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x19;
+			cpu->AF = 0x0002;
+			cpu->IX = 0xFFFF;
+			cpu->DE = 0x0001;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0, cpu->IX, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(HF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFD19)	// ADD IY,DE	FD 19
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x19;
+			cpu->AF = 0x0002;
+			cpu->IY = 0xFFFF;
+			cpu->DE = 0x0001;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0, cpu->IY, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(HF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
 		TEST_METHOD(Test0x1A)	// LD A,(DE)	1A
 		{
 			mem[0] = 0x1A;
@@ -217,6 +357,17 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
 		}
 
+		TEST_METHOD(Test0x1C)	// INC E	1C
+		{
+			mem[0] = 0x1C;
+			cpu->AF = 0x0002;
+			cpu->DE = 0x00FF;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0, cpu->DE, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(HF | PF | ZF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
 		TEST_METHOD(Test0x1E)	// LD E,N	1E NN
 		{
 			mem[0] = 0x1E;
@@ -225,6 +376,28 @@ namespace ZxEmuTest
 			cpu->Step();
 			Assert::IsTrue(cpu->DE == 0xCCDD, L"Memory wrong");
 			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x20)	// JR NZ,s		20 ss
+		{
+			mem[0] = 0x20;
+			mem[1] = (__int8)127;
+			cpu->AF = 0b10111111;
+			cpu->Step();
+			Assert::AreEqual<__int16>(129, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0b01000000;
+			cpu->Step();
+			Assert::AreEqual<__int16>(2, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			mem[1] = (__int8)-128;
+			cpu->AF = 0b10111111;
+			cpu->Step();
+			Assert::AreEqual<__int16>(-126, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0b01000000;
+			cpu->Step();
+			Assert::AreEqual<__int16>(2, cpu->PC, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0x21)	// LD HL, NN	21 NN NN
@@ -332,6 +505,41 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
 		}
 
+		TEST_METHOD(Test0x24)	// INC H	24
+		{
+			mem[0] = 0x24;
+			cpu->AF = 0x0002;
+			cpu->HL = 0xFF00;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0, cpu->HL, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(HF | PF | ZF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDD24)	// INC XH	DD 24
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x24;
+			cpu->AF = 0x0002;
+			cpu->IX = 0xFF00;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0, cpu->IX, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(HF | PF | ZF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFD24)	// INC YH	FD 24
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x24;
+			cpu->AF = 0x0002;
+			cpu->IY = 0xFF00;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0, cpu->IY, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(HF | PF | ZF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
 		TEST_METHOD(Test0x26)	// LD H,N	26 NN
 		{
 			mem[0] = 0x26;
@@ -360,6 +568,63 @@ namespace ZxEmuTest
 			cpu->Step();
 			Assert::IsTrue(cpu->IY == 0xCC00);
 			Assert::IsTrue(cpu->PC == 3);
+		}
+
+		TEST_METHOD(Test0x28)	// JR Z,s		28 ss
+		{
+			mem[0] = 0x28;
+			mem[1] = (__int8)127;
+			cpu->AF = 0b01000000;
+			cpu->Step();
+			Assert::AreEqual<__int16>(129, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0b10111111;
+			cpu->Step();
+			Assert::AreEqual<__int16>(2, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			mem[1] = (__int8)-128;
+			cpu->AF = 0b01000000;
+			cpu->Step();
+			Assert::AreEqual<__int16>(-126, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0b10111111;
+			cpu->Step();
+			Assert::AreEqual<__int16>(2, cpu->PC, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x29)	// ADD HL,HL	29
+		{
+			mem[0] = 0x29;
+			cpu->AF = 0x0002;
+			cpu->HL = 0x8000;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0, cpu->HL, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(HF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDD29)	// ADD IX,IX	DD 29
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x29;
+			cpu->AF = 0x0002;
+			cpu->IX = 0x8000;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0, cpu->IX, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(HF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFD29)	// ADD IY,IY	FD 29
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x29;
+			cpu->AF = 0x0002;
+			cpu->IY = 0x8000;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0, cpu->IY, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(HF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0x2A)	// LD HL,(NN)	2A NN NN
@@ -429,6 +694,41 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
 		}
 
+		TEST_METHOD(Test0x2C)	// INC L	2C
+		{
+			mem[0] = 0x2C;
+			cpu->AF = 0x0002;
+			cpu->HL = 0x00FF;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0, cpu->HL, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(HF | PF | ZF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDD2C)	// INC XL	DD 2C
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x2C;
+			cpu->AF = 0x0002;
+			cpu->IX = 0x00FF;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0, cpu->IX, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(HF | PF | ZF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFD2C)	// INC YL	FD 2C
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x2C;
+			cpu->AF = 0x0002;
+			cpu->IY = 0x00FF;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0, cpu->IY, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(HF | PF | ZF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
 		TEST_METHOD(Test0x2E)	// LD L,N	2E NN
 		{
 			mem[0] = 0x2E;
@@ -458,6 +758,28 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 3);
 		}
 
+		TEST_METHOD(Test0x30)	// JR NC,s		30 ss
+		{
+			mem[0] = 0x30;
+			mem[1] = (__int8)127;
+			cpu->AF = 0b11111110;
+			cpu->Step();
+			Assert::AreEqual<__int16>(129, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0b00000001;
+			cpu->Step();
+			Assert::AreEqual<__int16>(2, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			mem[1] = (__int8)-128;
+			cpu->AF = 0b11111110;
+			cpu->Step();
+			Assert::AreEqual<__int16>(-126, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0b00000001;
+			cpu->Step();
+			Assert::AreEqual<__int16>(2, cpu->PC, L"PC wrong");
+		}
+
 		TEST_METHOD(Test0x31)	// LD SP,NN	31 NN NN
 		{
 			mem[0] = 0x31;
@@ -480,7 +802,7 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 3);
 		}
 
-		TEST_METHOD(Test0x33)	// INC SP	33
+		TEST_METHOD(Test0x33)		// INC SP	33
 		{
 			mem[0] = 0x33;
 			cpu->SP = 0xABCD;
@@ -489,7 +811,65 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
 		}
 
-		TEST_METHOD(Test0x36)	// LD (HL),N	36
+		TEST_METHOD(Test0x34)		// INC (HL)		34
+		{
+			mem[0] = 0x34;
+			mem[0xA000] = 0xFF;
+			cpu->AF = 0x0002;
+			cpu->HL = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0, mem[0xA000], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(HF | PF | ZF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDD34)		// INC (IX+s)	DD 34 ss
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x34;
+			mem[2] = 127;
+			mem[0xA000 + 127] = 0xFF;
+			cpu->AF = 0x0002;
+			cpu->IX = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0, mem[0xA000 + 127], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(HF | PF | ZF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = -128;
+			mem[0xA000 - 128] = 0xFF;
+			cpu->AF = 0x0002;
+			cpu->IX = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0, mem[0xA000 - 128], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(HF | PF | ZF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFD34)		// INC (IY+s)	FD 34 ss
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x34;
+			mem[2] = 127;
+			mem[0xA000 + 127] = 0xFF;
+			cpu->AF = 0x0002;
+			cpu->IY = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0, mem[0xA000 + 127], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(HF | PF | ZF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = -128;
+			mem[0xA000 - 128] = 0xFF;
+			cpu->AF = 0x0002;
+			cpu->IY = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0, mem[0xA000 - 128], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(HF | PF | ZF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x36)		// LD (HL),N	36
 		{
 			mem[0] = 0x36;
 			mem[1] = 0x12;
@@ -500,7 +880,7 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
 		}
 
-		TEST_METHOD(Test0xDD36)	// LD (IX+s),N		DD 36 ss NN
+		TEST_METHOD(Test0xDD36)		// LD (IX+s),N		DD 36 ss NN
 		{
 			mem[0] = 0xDD;
 			mem[1] = 0x36;
@@ -538,6 +918,66 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
 		}
 
+		TEST_METHOD(Test0x38)	// JR C,s		38 ss
+		{
+			mem[0] = 0x38;
+			mem[1] = (__int8)127;
+			cpu->AF = 0b00000001;
+			cpu->Step();
+			Assert::AreEqual<__int16>(129, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0b11111110;
+			cpu->Step();
+			Assert::AreEqual<__int16>(2, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			mem[1] = (__int8)-128;
+			cpu->AF = 0b00000001;
+			cpu->Step();
+			Assert::AreEqual<__int16>(-126, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0b11111110;
+			cpu->Step();
+			Assert::AreEqual<__int16>(2, cpu->PC, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x39)	// ADD HL,SP	39
+		{
+			mem[0] = 0x39;
+			cpu->AF = 0x0002;
+			cpu->HL = 0xFFFF;
+			cpu->SP = 0x0001;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0, cpu->HL, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(HF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDD39)	// ADD IX,SP	DD 39
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x39;
+			cpu->AF = 0x0002;
+			cpu->IX = 0xFFFF;
+			cpu->SP = 0x0001;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0, cpu->IX, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(HF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFD39)	// ADD IY,SP	FD 39
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x39;
+			cpu->AF = 0x0002;
+			cpu->IY = 0xFFFF;
+			cpu->SP = 0x0001;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0, cpu->IY, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(HF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
 		TEST_METHOD(Test0x3A)	// LD A,(NN)	3A NN NN
 		{
 			mem[0] = 0x3A;
@@ -555,6 +995,16 @@ namespace ZxEmuTest
 			cpu->SP = 0xABCD;
 			cpu->Step();
 			Assert::IsTrue(cpu->SP == 0xABCC, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x3C)	// INC A	3C
+		{
+			mem[0] = 0x3C;
+			cpu->AF = 0xFF02;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(HF | PF | ZF, LOBYTE(cpu->AF), L"Flags wrong");
 			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
 		}
 
@@ -2215,6 +2665,230 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
 		}
 
+		TEST_METHOD(Test0x80)	// ADD A,B		80
+		{
+			mem[0] = 0x80;
+			cpu->AF = 0xC886;
+			cpu->BC = 0xC800;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x90, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x81)	// ADD A,C		81
+		{
+			mem[0] = 0x81;
+			cpu->AF = 0xC886;
+			cpu->BC = 0x00C8;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x90, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x82)	// ADD A,D		82
+		{
+			mem[0] = 0x82;
+			cpu->AF = 0xC886;
+			cpu->DE = 0xC800;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x90, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x83)	// ADD A,E		83
+		{
+			mem[0] = 0x83;
+			cpu->AF = 0xC886;
+			cpu->DE = 0x00C8;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x90, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x84)	// ADD A,H		84
+		{
+			mem[0] = 0x84;
+			cpu->AF = 0xC886;
+			cpu->HL = 0xC800;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x90, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDD84)	// ADD A,XH		DD 84
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x84;
+			cpu->AF = 0xC886;
+			cpu->IX = 0xC800;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x90, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFD84)	// ADD A,YH		FD 84
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x84;
+			cpu->AF = 0xC886;
+			cpu->IY = 0xC800;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x90, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x85)	// ADD A,L		85
+		{
+			mem[0] = 0x85;
+			cpu->AF = 0xC886;
+			cpu->HL = 0x00C8;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x90, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDD85)	// ADD A,XL		DD 85
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x85;
+			cpu->AF = 0xC886;
+			cpu->IX = 0x00C8;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x90, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFD85)	// ADD A,YL		FD 85
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x85;
+			cpu->AF = 0xC886;
+			cpu->IY = 0x00C8;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x90, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x86)	// ADD A,(HL)	86
+		{
+			mem[0] = 0x86;
+			mem[0xA000] = 0xC8;
+			cpu->AF = 0xC886;
+			cpu->HL = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x90, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDD86)	// ADD A,(IX+s)		DD 86 ss
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x86;
+			mem[2] = 127;
+			mem[0xA000 + 127] = 0xC8;
+			cpu->AF = 0xC886;
+			cpu->IX = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x90, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = -128;
+			mem[0xA000 - 128] = 0xC8;
+			cpu->AF = 0xC886;
+			cpu->IX = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x90, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFD86)	// ADD A,(IY+s)		FD 86 ss
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x86;
+			mem[2] = 127;
+			mem[0xA000 + 127] = 0xC8;
+			cpu->AF = 0xC886;
+			cpu->IY = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x90, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = -128;
+			mem[0xA000 - 128] = 0xC8;
+			cpu->AF = 0xC886;
+			cpu->IY = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x90, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x87)	// ADD A,A		87
+		{
+			mem[0] = 0x87;
+			cpu->AF = 0xC886;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x90, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xC0)	// RET NZ		C0
+		{
+			mem[0] = 0xC0;
+			cpu->SP = 0x1FFD;
+			MEM16(mem[cpu->SP]) = 0x1234;
+			cpu->AF = 0b10111111;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFF, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x1234, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0b01000000;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFF, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x0001, cpu->PC, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xC1)	// POP BC		C1
+		{
+			mem[0] = 0xC1;
+			cpu->SP = 0x1FFD;
+			mem[0x1FFD] = 0x34;
+			mem[0x1FFE] = 0x12;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFF, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x1234, cpu->BC, L"BC wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xC2)	// JP NZ,NN		C2 NN NN
+		{
+			mem[0] = 0xC2;
+			mem[1] = 0x34;
+			mem[2] = 0x12;
+			cpu->AF = 0b10111111;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1234, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0b01000000;
+			cpu->Step();
+			Assert::AreEqual<__int16>(3, cpu->PC, L"PC wrong");
+		}
+
 		TEST_METHOD(Test0xC3)	// JP NN	C3 NN NN
 		{
 			mem[0] = 0xC3;
@@ -2222,6 +2896,230 @@ namespace ZxEmuTest
 			mem[2] = 0xAB;
 			cpu->Step();
 			Assert::IsTrue(cpu->PC == 0xABCD, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xC4)	// CALL NZ,NN		C4 NN NN
+		{
+			mem[0] = 0xC4;
+			MEM16(mem[1]) = 0x1234;
+			cpu->SP = 0x1FFF;
+			cpu->AF = 0b10111111;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFD, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x0003, MEM16(mem[0x1FFD]), L"Stack wrong");
+			Assert::AreEqual<__int16>(0x1234, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0b01000000;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFD, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x0003, cpu->PC, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xC5)	// PUSH BC		C5
+		{
+			mem[0] = 0xC5;
+			cpu->SP = 0x1FFF;
+			cpu->BC = 0x1234;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFD, cpu->SP, L"Memory wrong");
+			Assert::AreEqual<__int16>(0x1234, MEM16(mem[0x1FFD]), L"Memory wrong");
+			Assert::AreEqual<__int16>(1, cpu->PC, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xC6)	// ADD A,N		C6 NN
+		{
+			mem[0] = 0xC6;
+			mem[1] = 0xC8;
+			cpu->AF = 0xC886;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x90, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xC7)	// RST #0		C7
+		{
+			mem[0] = 0xC7;
+			cpu->SP = 0x1FFF;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFD, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x0001, MEM16(mem[0x1FFD]), L"Memory wrong");
+			Assert::AreEqual<__int16>(0x0000, cpu->PC, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xC8)	// RET Z		C8
+		{
+			mem[0] = 0xC8;
+			cpu->SP = 0x1FFD;
+			MEM16(mem[cpu->SP]) = 0x1234;
+			cpu->AF = 0b01000000;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFF, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x1234, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0b10111111;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFF, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x0001, cpu->PC, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xC9)	// RET		C9
+		{
+			mem[0] = 0xC9;
+			cpu->SP = 0x1FFD;
+			MEM16(mem[cpu->SP]) = 0x1234;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFF, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x1234, cpu->PC, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xCA)	// JP Z,NN		CA NN NN
+		{
+			mem[0] = 0xCA;
+			mem[1] = 0x34;
+			mem[2] = 0x12;
+			cpu->AF = 0b01000000;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1234, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0b10111111;
+			cpu->Step();
+			Assert::AreEqual<__int16>(3, cpu->PC, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xCC)	// CALL Z,NN		CC NN NN
+		{
+			mem[0] = 0xCC;
+			MEM16(mem[1]) = 0x1234;
+			cpu->SP = 0x1FFF;
+			cpu->AF = 0b01000000;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFD, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x0003, MEM16(mem[0x1FFD]), L"Stack wrong");
+			Assert::AreEqual<__int16>(0x1234, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0b10111111;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFD, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x0003, cpu->PC, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xCD)	// CALL NN		CD NN NN
+		{
+			mem[0] = 0xCD;
+			MEM16(mem[1]) = 0x1234;
+			cpu->SP = 0x1FFF;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFD, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x0003, MEM16(mem[0x1FFD]), L"Stack wrong");
+			Assert::AreEqual<__int16>(0x1234, cpu->PC, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xCF)	// RST #8		CF
+		{
+			mem[0] = 0xCF;
+			cpu->SP = 0x1FFF;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFD, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x0001, MEM16(mem[0x1FFD]), L"Memory wrong");
+			Assert::AreEqual<__int16>(0x0008, cpu->PC, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xD0)	// RET NC		D0
+		{
+			mem[0] = 0xD0;
+			cpu->SP = 0x1FFD;
+			MEM16(mem[cpu->SP]) = 0x1234;
+			cpu->AF = 0b11111110;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFF, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x1234, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0b00000001;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFF, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x0001, cpu->PC, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xD1)	// POP DE		D1
+		{
+			mem[0] = 0xD1;
+			cpu->SP = 0x1FFD;
+			mem[0x1FFD] = 0x34;
+			mem[0x1FFE] = 0x12;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFF, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x1234, cpu->DE, L"DE wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xD2)	// JP NC,NN		D2 NN NN
+		{
+			mem[0] = 0xD2;
+			mem[1] = 0x34;
+			mem[2] = 0x12;
+			cpu->AF = 0b11111110;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1234, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0b00000001;
+			cpu->Step();
+			Assert::AreEqual<__int16>(3, cpu->PC, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xD4)	// CALL NC,NN		D4 NN NN
+		{
+			mem[0] = 0xD4;
+			MEM16(mem[1]) = 0x1234;
+			cpu->SP = 0x1FFF;
+			cpu->AF = 0b11111110;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFD, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x0003, MEM16(mem[0x1FFD]), L"Stack wrong");
+			Assert::AreEqual<__int16>(0x1234, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0b00000001;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFD, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x0003, cpu->PC, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xD5)	// PUSH DE		D5
+		{
+			mem[0] = 0xD5;
+			cpu->SP = 0x1FFF;
+			cpu->DE = 0x1234;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFD, cpu->SP, L"Memory wrong");
+			Assert::AreEqual<__int8>(mem[0x1FFD], 0x34, L"Memory wrong");
+			Assert::AreEqual<__int8>(mem[0x1FFE], 0x12, L"Memory wrong");
+			Assert::AreEqual<__int16>(1, cpu->PC, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xD7)	// RST #10		D7
+		{
+			mem[0] = 0xD7;
+			cpu->SP = 0x1FFF;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFD, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x0001, MEM16(mem[0x1FFD]), L"Memory wrong");
+			Assert::AreEqual<__int16>(0x0010, cpu->PC, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xD8)	// RET C		D8
+		{
+			mem[0] = 0xD8;
+			cpu->SP = 0x1FFD;
+			MEM16(mem[cpu->SP]) = 0x1234;
+			cpu->AF = 0b00000001;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFF, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x1234, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0b11111110;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFF, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x0001, cpu->PC, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0xD9)	// EXX D9
@@ -2239,6 +3137,115 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->_AF == 0x1111 && cpu->_BC == 0x2222 && cpu->_DE == 0x3333 && cpu->_HL == 0x4444);
 			Assert::IsTrue(cpu->AF == 0x5555 && cpu->BC == 0x6666 && cpu->DE == 0x7777 && cpu->HL == 0x8888);
 			Assert::IsTrue(cpu->PC == 1);
+		}
+
+		TEST_METHOD(Test0xDA)	// JP C,NN		DA NN NN
+		{
+			mem[0] = 0xDA;
+			mem[1] = 0x34;
+			mem[2] = 0x12;
+			cpu->AF = 0b00000001;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1234, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0b11111110;
+			cpu->Step();
+			Assert::AreEqual<__int16>(3, cpu->PC, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDC)	// CALL C,NN		DC NN NN
+		{
+			mem[0] = 0xDC;
+			MEM16(mem[1]) = 0x1234;
+			cpu->SP = 0x1FFF;
+			cpu->AF = 0b00000001;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFD, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x0003, MEM16(mem[0x1FFD]), L"Stack wrong");
+			Assert::AreEqual<__int16>(0x1234, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0b11111110;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFD, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x0003, cpu->PC, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDF)	// RST #18		DF
+		{
+			mem[0] = 0xDF;
+			cpu->SP = 0x1FFF;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFD, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x0001, MEM16(mem[0x1FFD]), L"Memory wrong");
+			Assert::AreEqual<__int16>(0x0018, cpu->PC, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xE0)	// RET PO		E0
+		{
+			mem[0] = 0xE0;
+			cpu->SP = 0x1FFD;
+			MEM16(mem[cpu->SP]) = 0x1234;
+			cpu->AF = 0b11111011;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFF, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x1234, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0b00000100;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFF, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x0001, cpu->PC, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xE1)	// POP HL		E1
+		{
+			mem[0] = 0xE1;
+			cpu->SP = 0x1FFD;
+			mem[0x1FFD] = 0x34;
+			mem[0x1FFE] = 0x12;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFF, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x1234, cpu->HL, L"HL wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDDE1)	// POP IX		DD E1
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0xE1;
+			cpu->SP = 0x1FFD;
+			mem[0x1FFD] = 0x34;
+			mem[0x1FFE] = 0x12;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFF, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x1234, cpu->IX, L"IX wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFDE1)	// POP IY		FD E1
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0xE1;
+			cpu->SP = 0x1FFD;
+			mem[0x1FFD] = 0x34;
+			mem[0x1FFE] = 0x12;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFF, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x1234, cpu->IY, L"IY wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xE2)	// JP PO,NN		E2 NN NN
+		{
+			mem[0] = 0xE2;
+			mem[1] = 0x34;
+			mem[2] = 0x12;
+			cpu->AF = 0b11111011;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1234, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0b00000100;
+			cpu->Step();
+			Assert::AreEqual<__int16>(3, cpu->PC, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0xE3)	// EX (SP),HL	E3
@@ -2279,6 +3286,87 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
 		}
 
+		TEST_METHOD(Test0xE4)	// CALL PO,NN		E4 NN NN
+		{
+			mem[0] = 0xE4;
+			MEM16(mem[1]) = 0x1234;
+			cpu->SP = 0x1FFF;
+			cpu->AF = 0b11111011;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFD, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x0003, MEM16(mem[0x1FFD]), L"Stack wrong");
+			Assert::AreEqual<__int16>(0x1234, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0b00000100;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFD, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x0003, cpu->PC, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xE5)	// PUSH HL		E5
+		{
+			mem[0] = 0xE5;
+			cpu->SP = 0x1FFF;
+			cpu->HL = 0x1234;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFD, cpu->SP, L"Memory wrong");
+			Assert::AreEqual<__int8>(mem[0x1FFD], 0x34, L"Memory wrong");
+			Assert::AreEqual<__int8>(mem[0x1FFE], 0x12, L"Memory wrong");
+			Assert::AreEqual<__int16>(1, cpu->PC, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDDE5)	// PUSH IX		DD E5
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0xE5;
+			cpu->SP = 0x1FFF;
+			cpu->IX = 0x1234;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFD, cpu->SP, L"Memory wrong");
+			Assert::AreEqual<__int8>(mem[0x1FFD], 0x34, L"Memory wrong");
+			Assert::AreEqual<__int8>(mem[0x1FFE], 0x12, L"Memory wrong");
+			Assert::AreEqual<__int16>(2, cpu->PC, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFDE5)	// PUSH IY		FD E5
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0xE5;
+			cpu->SP = 0x1FFF;
+			cpu->IY = 0x1234;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFD, cpu->SP, L"Memory wrong");
+			Assert::AreEqual<__int8>(mem[0x1FFD], 0x34, L"Memory wrong");
+			Assert::AreEqual<__int8>(mem[0x1FFE], 0x12, L"Memory wrong");
+			Assert::AreEqual<__int16>(2, cpu->PC, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xE7)	// RST #20		E7
+		{
+			mem[0] = 0xE7;
+			cpu->SP = 0x1FFF;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFD, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x0001, MEM16(mem[0x1FFD]), L"Memory wrong");
+			Assert::AreEqual<__int16>(0x0020, cpu->PC, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xE8)	// RET PE		E8
+		{
+			mem[0] = 0xE8;
+			cpu->SP = 0x1FFD;
+			MEM16(mem[cpu->SP]) = 0x1234;
+			cpu->AF = 0b00000100;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFF, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x1234, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0b11111011;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFF, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x0001, cpu->PC, L"PC wrong");
+		}
+
 		TEST_METHOD(Test0xE9)	// JP (HL)	E9
 		{
 			mem[0] = 0xE9;
@@ -2305,6 +3393,20 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 0xA000, L"PC wrong");
 		}
 
+		TEST_METHOD(Test0xEA)	// JP PE,NN		EA NN NN
+		{
+			mem[0] = 0xEA;
+			mem[1] = 0x34;
+			mem[2] = 0x12;
+			cpu->AF = 0b00000100;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1234, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0b11111011;
+			cpu->Step();
+			Assert::AreEqual<__int16>(3, cpu->PC, L"PC wrong");
+		}
+
 		TEST_METHOD(Test0xEB)	// EX DE,HL
 		{
 			mem[0] = 0xEB;
@@ -2313,6 +3415,130 @@ namespace ZxEmuTest
 			cpu->Step();
 			Assert::IsTrue(cpu->DE == 0x2222 && cpu->HL == 0x1111);
 			Assert::IsTrue(cpu->PC == 1);
+		}
+
+		TEST_METHOD(Test0xEC)	// CALL PE,NN		EC NN NN
+		{
+			mem[0] = 0xEC;
+			MEM16(mem[1]) = 0x1234;
+			cpu->SP = 0x1FFF;
+			cpu->AF = 0b00000100;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFD, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x0003, MEM16(mem[0x1FFD]), L"Stack wrong");
+			Assert::AreEqual<__int16>(0x1234, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0b11111011;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFD, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x0003, cpu->PC, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xEF)	// RST #28		EF
+		{
+			mem[0] = 0xEF;
+			cpu->SP = 0x1FFF;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFD, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x0001, MEM16(mem[0x1FFD]), L"Memory wrong");
+			Assert::AreEqual<__int16>(0x0028, cpu->PC, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xF0)	// RET P		F0
+		{
+			mem[0] = 0xF0;
+			cpu->SP = 0x1FFD;
+			MEM16(mem[cpu->SP]) = 0x1234;
+			cpu->AF = 0b01111111;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFF, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x1234, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0b10000000;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFF, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x0001, cpu->PC, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xF1)	// POP AF		F1
+		{
+			mem[0] = 0xF1;
+			cpu->SP = 0x1FFD;
+			mem[0x1FFD] = 0x34;
+			mem[0x1FFE] = 0x12;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFF, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x1234, cpu->AF, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xF2)	// JP P,NN		F2 NN NN
+		{
+			mem[0] = 0xF2;
+			mem[1] = 0x34;
+			mem[2] = 0x12;
+			cpu->AF = 0b01111111;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1234, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0b10000000;
+			cpu->Step();
+			Assert::AreEqual<__int16>(3, cpu->PC, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xF4)	// CALL P,NN		F4 NN NN
+		{
+			mem[0] = 0xF4;
+			MEM16(mem[1]) = 0x1234;
+			cpu->SP = 0x1FFF;
+			cpu->AF = 0b01111111;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFD, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x0003, MEM16(mem[0x1FFD]), L"Stack wrong");
+			Assert::AreEqual<__int16>(0x1234, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0b10000000;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFD, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x0003, cpu->PC, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xF5)	// PUSH AF		F5
+		{
+			mem[0] = 0xF5;
+			cpu->SP = 0x1FFF;
+			cpu->AF = 0x1234;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFD, cpu->SP, L"Memory wrong");
+			Assert::AreEqual<__int8>(mem[0x1FFD], 0x34, L"Memory wrong");
+			Assert::AreEqual<__int8>(mem[0x1FFE], 0x12, L"Memory wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xF7)	// RST #30		F7
+		{
+			mem[0] = 0xF7;
+			cpu->SP = 0x1FFF;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFD, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x0001, MEM16(mem[0x1FFD]), L"Memory wrong");
+			Assert::AreEqual<__int16>(0x0030, cpu->PC, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xF8)	// RET M		F8
+		{
+			mem[0] = 0xF8;
+			cpu->SP = 0x1FFD;
+			MEM16(mem[cpu->SP]) = 0x1234;
+			cpu->AF = 0b10000000;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFF, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x1234, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0b01111111;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFF, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x0001, cpu->PC, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0xF9)	// LD SP,HL	F9
@@ -2347,7 +3573,46 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 2);
 		}
 
+		TEST_METHOD(Test0xFA)	// JP M,NN		FA NN NN
+		{
+			mem[0] = 0xFA;
+			mem[1] = 0x34;
+			mem[2] = 0x12;
+			cpu->AF = 0b10000000;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1234, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0b01111111;
+			cpu->Step();
+			Assert::AreEqual<__int16>(3, cpu->PC, L"PC wrong");
+		}
 
+		TEST_METHOD(Test0xFC)	// CALL M,NN		FC NN NN
+		{
+			mem[0] = 0xFC;
+			MEM16(mem[1]) = 0x1234;
+			cpu->SP = 0x1FFF;
+			cpu->AF = 0b10000000;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFD, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x0003, MEM16(mem[0x1FFD]), L"Stack wrong");
+			Assert::AreEqual<__int16>(0x1234, cpu->PC, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0b01111111;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFD, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x0003, cpu->PC, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFF)	// RST #38		FF
+		{
+			mem[0] = 0xFF;
+			cpu->SP = 0x1FFF;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x1FFD, cpu->SP, L"SP wrong");
+			Assert::AreEqual<__int16>(0x0001, MEM16(mem[0x1FFD]), L"Memory wrong");
+			Assert::AreEqual<__int16>(0x0038, cpu->PC, L"PC wrong");
+		}
 
 	};
 }

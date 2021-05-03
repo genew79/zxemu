@@ -19,10 +19,16 @@ bool EmuRender::Init()
 	m_window.create(sf::VideoMode(FRAME_WIDTH, FRAME_HEIGHT), "ZXEmu");
 //	m_window.setFramerateLimit(60);
 	m_frame->setPosition(0.f, 0.f);
-	m_text = sf::Text();
-	m_text.setFont(Assets::Instance().font);
-	m_text.setFillColor(sf::Color::Cyan);
-	m_text.setPosition(5.f, 5.f);
+
+	m_textFramerate = sf::Text();
+	m_textFramerate.setFont(Assets::Instance().font);
+	m_textFramerate.setFillColor(sf::Color::Cyan);
+	m_textFramerate.setPosition(5.f, 5.f);
+
+	m_textPC = sf::Text();
+	m_textPC.setFont(Assets::Instance().font);
+	m_textPC.setFillColor(sf::Color::Yellow);
+	m_textPC.setPosition(950.f, 5.f);
 	return true;
 }
 
@@ -35,13 +41,16 @@ void EmuRender::Render()
 	m_window.draw(*this);
 	m_window.display();
 	int Framerate = (int)(1.f / m_clock.getElapsedTime().asSeconds());
-	m_text.setString(std::to_string(Framerate));
+	m_textFramerate.setString(std::to_string(Framerate));
 	m_clock.restart();
+
+	m_textPC.setString(std::to_string(m_model->getCpu()->PC));
 }
 
 void EmuRender::draw(sf::RenderTarget& target, sf::RenderStates states) const
 {
 	states.transform *= getTransform();
 	target.draw(*m_frame, states);
-	target.draw(m_text, states);
+	target.draw(m_textFramerate, states);
+	target.draw(m_textPC, states);
 }

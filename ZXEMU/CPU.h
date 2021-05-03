@@ -2,6 +2,14 @@
 
 #define LOBYTE(w) ((unsigned __int8)(w))
 #define HIBYTE(w) ((unsigned __int8)(((unsigned __int16)(w) >> 8) & 0xFF))
+#define MEM16(m) *(__int16*)&m
+
+#define ZF 0b01000000
+#define SF 0b10000000
+#define HF 0b00010000
+#define PF 0b00000100
+#define NF 0b00000010
+#define CF 0b00000001
 
 class CPU
 {
@@ -49,5 +57,11 @@ public:
 	static void LD8HI(unsigned __int16& reg, unsigned __int8 val);
 	static void EX16(unsigned __int16& reg1, unsigned __int16& reg2);
 	void EXX();
+	void PUSH(unsigned __int16& reg);
+	void POP(unsigned __int16& reg);
+	void RST(unsigned __int16 addr);
+	void CALL(unsigned __int16 addr);
+	unsigned __int8 Add8(unsigned __int8 reg1, unsigned __int8 reg2, bool withoutCF = false);
+	unsigned __int16 Add16(unsigned __int16 reg1, unsigned __int16 reg2);
 	void Stop(unsigned __int8 opcode);
 };
