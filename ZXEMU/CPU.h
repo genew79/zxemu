@@ -2,12 +2,17 @@
 
 #define LOBYTE(w) ((unsigned __int8)(w))
 #define HIBYTE(w) ((unsigned __int8)(((unsigned __int16)(w) >> 8) & 0xFF))
+#define LOWORD(w) ((unsigned __int16)(w))
+#define HIWORD(w) ((unsigned __int16)(((unsigned __int32)(w) >> 16) & 0xFFFF))
 #define MEM16(m) *(__int16*)&m
 
-#define ZF 0b01000000
 #define SF 0b10000000
+#define ZF 0b01000000
+#define F5 0b00100000
 #define HF 0b00010000
+#define F3 0b00001000
 #define PF 0b00000100
+#define VF 0b00000100
 #define NF 0b00000010
 #define CF 0b00000001
 
@@ -35,6 +40,7 @@ public:
 	~CPU();
 	void Step();
 protected:
+	void Processing_DD_FD_CB(unsigned __int8 opcode, unsigned __int8 prefix = 0);
 	void Processing_00_0F(unsigned __int8 opcode, unsigned __int8 prefix = 0);
 	void Processing_10_1F(unsigned __int8 opcode, unsigned __int8 prefix = 0);
 	void Processing_20_2F(unsigned __int8 opcode, unsigned __int8 prefix = 0);
@@ -62,6 +68,17 @@ public:
 	void RST(unsigned __int16 addr);
 	void CALL(unsigned __int16 addr);
 	unsigned __int8 Add8(unsigned __int8 reg1, unsigned __int8 reg2, bool withoutCF = false);
-	unsigned __int16 Add16(unsigned __int16 reg1, unsigned __int16 reg2);
+	unsigned __int8 INC8(unsigned __int8 reg1);
+	unsigned __int8 ADC8(unsigned __int8 reg1, unsigned __int8 reg2);
+	unsigned __int16 ADD16(unsigned __int16 reg1, unsigned __int16 reg2);
+	unsigned __int16 ADC16(unsigned __int16 reg1, unsigned __int16 reg2);
+	unsigned __int8 SUB8(unsigned __int8 reg1, unsigned __int8 reg2, bool withoutCF = false);
+	unsigned __int8 SBC8(unsigned __int8 reg1, unsigned __int8 reg2);
+	unsigned __int16 SBC16(unsigned __int16 reg1, unsigned __int16 reg2);
+	void CP8(unsigned __int8 reg1, unsigned __int8 reg2);
+	unsigned __int8 AND8(unsigned __int8 reg1, unsigned __int8 reg2);
+	unsigned __int8 OR8(unsigned __int8 reg1, unsigned __int8 reg2);
+	unsigned __int8 XOR8(unsigned __int8 reg1, unsigned __int8 reg2);
+	unsigned __int8 SRL8(unsigned __int8 reg1);
 	void Stop(unsigned __int8 opcode);
 };

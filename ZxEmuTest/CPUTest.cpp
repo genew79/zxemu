@@ -66,12 +66,94 @@ namespace ZxEmuTest
 
 		TEST_METHOD(TestAdd8)
 		{
+			cpu->AF = 0x0000;
 			auto res = cpu->Add8(0xFF, 0x01);
 			Assert::AreEqual<unsigned __int8>(0x00, res, L"Result wrong");
-			Assert::AreEqual<unsigned __int8>(ZF | HF | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
-			res = cpu->Add8(0x0F, 0x01);
-			Assert::AreEqual<unsigned __int8>(0x10, res, L"Result wrong");
-			Assert::AreEqual<unsigned __int8>(HF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | HF | VF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			cpu->AF = 0x0000;
+			res = cpu->Add8(0x0F, 0x09);
+			Assert::AreEqual<unsigned __int8>(0x18, res, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(HF | F3, LOBYTE(cpu->AF), L"Flags wrong");
+		}
+
+		TEST_METHOD(TestSUB8)
+		{
+			cpu->AF = 0x0000;
+			auto res = cpu->SUB8(0x00, 0x01);
+			Assert::AreEqual<unsigned __int8>(0xFF, res, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | VF | NF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			cpu->AF = 0x0000;
+			res = cpu->SUB8(0x0F, 0x07);
+			Assert::AreEqual<unsigned __int8>(0x08, res, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(F3 | NF, LOBYTE(cpu->AF), L"Flags wrong");
+		}
+
+		TEST_METHOD(TestSBC16)
+		{
+			cpu->AF = 0x0000;
+			auto res = cpu->SBC16(0x0001, 0x0001);
+			Assert::AreEqual<__int16>(0x0000, res, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | NF, LOBYTE(cpu->AF), L"Flags wrong");
+			cpu->AF = 0x0001;
+			res = cpu->SBC16(0x0001, 0x0001);
+			Assert::AreEqual<__int16>(-1, res, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | VF | NF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+		}
+
+		TEST_METHOD(TestCP8)
+		{
+			cpu->AF = 0x0000;
+			cpu->CP8(0x00, 0x01);
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | VF | NF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			cpu->AF = 0x0000;
+			cpu->CP8(0x0F, 0x07);
+			Assert::AreEqual<unsigned __int8>(F3 | NF, LOBYTE(cpu->AF), L"Flags wrong");
+		}
+
+		TEST_METHOD(TestAND8)
+		{
+			auto res = cpu->AND8(0xFF, 0xFF);
+			Assert::AreEqual<unsigned __int8>(0xFF, res, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			res = cpu->AND8(0xF0, 0x0F);
+			Assert::AreEqual<unsigned __int8>(0x00, res, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | HF | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			res = cpu->AND8(0xFF, 0x80);
+			Assert::AreEqual<unsigned __int8>(0x80, res, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF, LOBYTE(cpu->AF), L"Flags wrong");
+		}
+
+		TEST_METHOD(TestOR8)
+		{
+			auto res = cpu->OR8(0xF0, 0x0F);
+			Assert::AreEqual<unsigned __int8>(0xFF, res, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			res = cpu->OR8(0x00, 0x00);
+			Assert::AreEqual<unsigned __int8>(0x00, res, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			res = cpu->OR8(0x00, 0x8F);
+			Assert::AreEqual<unsigned __int8>(0x8F, res, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F3, LOBYTE(cpu->AF), L"Flags wrong");
+		}
+
+		TEST_METHOD(TestXOR8)
+		{
+			auto res = cpu->XOR8(0xF0, 0x0F);
+			Assert::AreEqual<unsigned __int8>(0xFF, res, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			res = cpu->XOR8(0x00, 0x00);
+			Assert::AreEqual<unsigned __int8>(0x00, res, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			res = cpu->XOR8(0xFF, 0x70);
+			Assert::AreEqual<unsigned __int8>(0x8F, res, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F3, LOBYTE(cpu->AF), L"Flags wrong");
+		}
+
+		TEST_METHOD(TestSRL8)
+		{
+			auto res = cpu->SRL8(0x1F);
+			Assert::AreEqual<unsigned __int8>(0x0F, res, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(F3 | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
 		}
 
 		TEST_METHOD(Test0x01)	// LD BC,NN		01 NN NN
@@ -112,6 +194,16 @@ namespace ZxEmuTest
 			cpu->Step();
 			Assert::AreEqual<__int16>(0, cpu->BC, L"Result wrong");
 			Assert::AreEqual<unsigned __int8>(HF | PF | ZF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x05)	// DEC B	05
+		{
+			mem[0] = 0x05;
+			cpu->BC = 0x0000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->BC), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
 			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
 		}
 
@@ -205,6 +297,16 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
 		}
 
+		TEST_METHOD(Test0x0D)	// DEC C	0D
+		{
+			mem[0] = 0x0D;
+			cpu->BC = 0x0000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, LOBYTE(cpu->BC), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
 		TEST_METHOD(Test0x0E)	// LD C,N	0E NN
 		{
 			mem[0] = 0x0E;
@@ -274,6 +376,16 @@ namespace ZxEmuTest
 			cpu->Step();
 			Assert::AreEqual<__int16>(0, cpu->DE, L"Result wrong");
 			Assert::AreEqual<unsigned __int8>(HF | PF | ZF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x15)	// DEC D	15
+		{
+			mem[0] = 0x15;
+			cpu->DE = 0x0000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->DE), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
 			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
 		}
 
@@ -365,6 +477,16 @@ namespace ZxEmuTest
 			cpu->Step();
 			Assert::AreEqual<__int16>(0, cpu->DE, L"Result wrong");
 			Assert::AreEqual<unsigned __int8>(HF | PF | ZF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x1D)	// DEC E	1D
+		{
+			mem[0] = 0x1D;
+			cpu->DE = 0x0000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, LOBYTE(cpu->DE), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
 			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
 		}
 
@@ -540,6 +662,38 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
 		}
 
+		TEST_METHOD(Test0x25)	// DEC H	25
+		{
+			mem[0] = 0x25;
+			cpu->HL = 0x0000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->HL), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDD25)	// DEC XH	DD 25
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x25;
+			cpu->IX = 0x0000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->IX), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFD25)	// DEC YH	FD 25
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x25;
+			cpu->IY = 0x0000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->IY), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
 		TEST_METHOD(Test0x26)	// LD H,N	26 NN
 		{
 			mem[0] = 0x26;
@@ -599,7 +753,7 @@ namespace ZxEmuTest
 			cpu->HL = 0x8000;
 			cpu->Step();
 			Assert::AreEqual<__int16>(0, cpu->HL, L"Result wrong");
-			Assert::AreEqual<unsigned __int8>(HF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::AreEqual<unsigned __int8>(CF, LOBYTE(cpu->AF), L"Flags wrong");
 			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
 		}
 
@@ -611,7 +765,7 @@ namespace ZxEmuTest
 			cpu->IX = 0x8000;
 			cpu->Step();
 			Assert::AreEqual<__int16>(0, cpu->IX, L"Result wrong");
-			Assert::AreEqual<unsigned __int8>(HF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::AreEqual<unsigned __int8>(CF, LOBYTE(cpu->AF), L"Flags wrong");
 			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
 		}
 
@@ -623,7 +777,7 @@ namespace ZxEmuTest
 			cpu->IY = 0x8000;
 			cpu->Step();
 			Assert::AreEqual<__int16>(0, cpu->IY, L"Result wrong");
-			Assert::AreEqual<unsigned __int8>(HF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::AreEqual<unsigned __int8>(CF, LOBYTE(cpu->AF), L"Flags wrong");
 			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
 		}
 
@@ -726,6 +880,38 @@ namespace ZxEmuTest
 			cpu->Step();
 			Assert::AreEqual<__int16>(0, cpu->IY, L"Result wrong");
 			Assert::AreEqual<unsigned __int8>(HF | PF | ZF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x2D)	// DEC L	2D
+		{
+			mem[0] = 0x2D;
+			cpu->HL = 0x0000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, LOBYTE(cpu->HL), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDD2D)	// DEC XL	DD 2D
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x2D;
+			cpu->IX = 0x0000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, LOBYTE(cpu->IX), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFD2D)	// DEC YL	FD 2D
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x2D;
+			cpu->IY = 0x0000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, LOBYTE(cpu->IY), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
 			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
 		}
 
@@ -869,6 +1055,63 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
 		}
 
+		TEST_METHOD(Test0x35)	// DEC (HL)		35
+		{
+			mem[0] = 0x35;
+			mem[0xA000] = 0x00;
+			cpu->HL = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, mem[0xA000], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDD35)		// DEC (IX+s)	DD 35 ss
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x35;
+			mem[2] = 127;
+			mem[0xA000 + 127] = 0x00;
+			cpu->AF = 0x0002;
+			cpu->IX = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0xFF, mem[0xA000 + 127], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = -128;
+			mem[0xA000 - 128] = 0x00;
+			cpu->AF = 0x0002;
+			cpu->IX = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0xFF, mem[0xA000 - 128], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFD35)		// DEC (IY+s)	FD 35 ss
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x35;
+			mem[2] = 127;
+			mem[0xA000 + 127] = 0x00;
+			cpu->AF = 0x0002;
+			cpu->IY = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0xFF, mem[0xA000 + 127], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = -128;
+			mem[0xA000 - 128] = 0x00;
+			cpu->AF = 0x0002;
+			cpu->IY = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0xFF, mem[0xA000 - 128], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
 		TEST_METHOD(Test0x36)		// LD (HL),N	36
 		{
 			mem[0] = 0x36;
@@ -940,6 +1183,67 @@ namespace ZxEmuTest
 			Assert::AreEqual<__int16>(2, cpu->PC, L"PC wrong");
 		}
 
+		TEST_METHOD(Test0xCB38)		// SRL B	CB 38
+		{
+			mem[0] = 0xCB;
+			mem[1] = 0x38;
+			cpu->BC = 0x1F00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x0F, HIBYTE(cpu->BC), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(F3 | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDDCB38)		// SRL B,(IX+s)		DD CB ss 38
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0xCB;
+			mem[2] = 127;
+			mem[3] = 0x38;
+			mem[0xA000 + 127] = 0x1F;
+			cpu->BC = 0xFF00;
+			cpu->IX = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x0F, HIBYTE(cpu->BC), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, mem[0xA000 + 127], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(F3 | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = -128;
+			mem[0xA000 - 128] = 0x01;
+			cpu->BC = 0xFF00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->BC), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x00, mem[0xA000 - 128], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFDCB38)		// SRL B,(IY+s)		FD CB ss 38
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0xCB;
+			mem[2] = 127;
+			mem[3] = 0x38;
+			mem[0xA000 + 127] = 0x1F;
+			cpu->BC = 0xFF00;
+			cpu->IY = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x0F, HIBYTE(cpu->BC), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, mem[0xA000 + 127], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(F3 | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = -128;
+			mem[0xA000 - 128] = 0x01;
+			cpu->BC = 0xFF00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->BC), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x00, mem[0xA000 - 128], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+		}
+
 		TEST_METHOD(Test0x39)	// ADD HL,SP	39
 		{
 			mem[0] = 0x39;
@@ -950,6 +1254,17 @@ namespace ZxEmuTest
 			Assert::AreEqual<__int16>(0, cpu->HL, L"Result wrong");
 			Assert::AreEqual<unsigned __int8>(HF | CF, LOBYTE(cpu->AF), L"Flags wrong");
 			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xCB39)		// SRL C	CB 39
+		{
+			mem[0] = 0xCB;
+			mem[1] = 0x39;
+			cpu->BC = 0x001F;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x0F, LOBYTE(cpu->BC), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(F3 | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0xDD39)	// ADD IX,SP	DD 39
@@ -978,6 +1293,56 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
 		}
 
+		TEST_METHOD(Test0xDDCB39)		// SRL C,(IX+s)		DD CB ss 39
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0xCB;
+			mem[2] = 127;
+			mem[3] = 0x39;
+			mem[0xA000 + 127] = 0x1F;
+			cpu->BC = 0x00FF;
+			cpu->IX = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x0F, LOBYTE(cpu->BC), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, mem[0xA000 + 127], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(F3 | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = -128;
+			mem[0xA000 - 128] = 0x01;
+			cpu->BC = 0x00FF;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, LOBYTE(cpu->BC), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x00, mem[0xA000 - 128], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFDCB39)		// SRL C,(IY+s)		FD CB ss 39
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0xCB;
+			mem[2] = 127;
+			mem[3] = 0x39;
+			mem[0xA000 + 127] = 0x1F;
+			cpu->BC = 0x00FF;
+			cpu->IY = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x0F, LOBYTE(cpu->BC), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, mem[0xA000 + 127], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(F3 | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = -128;
+			mem[0xA000 - 128] = 0x01;
+			cpu->BC = 0x00FF;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, LOBYTE(cpu->BC), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x00, mem[0xA000 - 128], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+		}
+
 		TEST_METHOD(Test0x3A)	// LD A,(NN)	3A NN NN
 		{
 			mem[0] = 0x3A;
@@ -989,6 +1354,67 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 3);
 		}
 
+		TEST_METHOD(Test0xCB3A)		// SRL D	CB 3A
+		{
+			mem[0] = 0xCB;
+			mem[1] = 0x3A;
+			cpu->DE = 0x1F00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x0F, HIBYTE(cpu->DE), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(F3 | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDDCB3A)		// SRL D,(IX+s)		DD CB ss 3A
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0xCB;
+			mem[2] = 127;
+			mem[3] = 0x3A;
+			mem[0xA000 + 127] = 0x1F;
+			cpu->DE = 0xFF00;
+			cpu->IX = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x0F, HIBYTE(cpu->DE), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, mem[0xA000 + 127], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(F3 | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = -128;
+			mem[0xA000 - 128] = 0x01;
+			cpu->DE = 0xFF00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->DE), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x00, mem[0xA000 - 128], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFDCB3A)		// SRL D,(IY+s)		FD CB ss 3A
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0xCB;
+			mem[2] = 127;
+			mem[3] = 0x3A;
+			mem[0xA000 + 127] = 0x1F;
+			cpu->DE = 0xFF00;
+			cpu->IY = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x0F, HIBYTE(cpu->DE), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, mem[0xA000 + 127], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(F3 | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = -128;
+			mem[0xA000 - 128] = 0x01;
+			cpu->DE = 0xFF00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->DE), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x00, mem[0xA000 - 128], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+		}
+
 		TEST_METHOD(Test0x3B)	// DEC SP	3B
 		{
 			mem[0] = 0x3B;
@@ -996,6 +1422,67 @@ namespace ZxEmuTest
 			cpu->Step();
 			Assert::IsTrue(cpu->SP == 0xABCC, L"Memory wrong");
 			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xCB3B)		// SRL E	CB 3B
+		{
+			mem[0] = 0xCB;
+			mem[1] = 0x3B;
+			cpu->DE = 0x001F;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x0F, LOBYTE(cpu->DE), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(F3 | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDDCB3B)		// SRL E,(IX+s)		DD CB ss 3B
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0xCB;
+			mem[2] = 127;
+			mem[3] = 0x3B;
+			mem[0xA000 + 127] = 0x1F;
+			cpu->DE = 0x00FF;
+			cpu->IX = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x0F, LOBYTE(cpu->DE), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, mem[0xA000 + 127], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(F3 | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = -128;
+			mem[0xA000 - 128] = 0x01;
+			cpu->DE = 0x00FF;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, LOBYTE(cpu->DE), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x00, mem[0xA000 - 128], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFDCB3B)		// SRL E,(IY+s)		FD CB ss 3B
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0xCB;
+			mem[2] = 127;
+			mem[3] = 0x3B;
+			mem[0xA000 + 127] = 0x1F;
+			cpu->DE = 0x00FF;
+			cpu->IY = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x0F, LOBYTE(cpu->DE), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, mem[0xA000 + 127], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(F3 | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = -128;
+			mem[0xA000 - 128] = 0x01;
+			cpu->DE = 0x00FF;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, LOBYTE(cpu->DE), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x00, mem[0xA000 - 128], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0x3C)	// INC A	3C
@@ -1008,6 +1495,138 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
 		}
 
+		TEST_METHOD(Test0xCB3C)		// SRL H	CB 3C
+		{
+			mem[0] = 0xCB;
+			mem[1] = 0x3C;
+			cpu->HL = 0x1F00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x0F, HIBYTE(cpu->HL), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(F3 | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDDCB3C)		// SRL H,(IX+s)		DD CB ss 3C
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0xCB;
+			mem[2] = 127;
+			mem[3] = 0x3C;
+			mem[0xA000 + 127] = 0x1F;
+			cpu->HL = 0xFF00;
+			cpu->IX = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x0F, HIBYTE(cpu->HL), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, mem[0xA000 + 127], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(F3 | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = -128;
+			mem[0xA000 - 128] = 0x01;
+			cpu->HL = 0xFF00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->HL), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x00, mem[0xA000 - 128], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFDCB3C)		// SRL H,(IY+s)		FD CB ss 3C
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0xCB;
+			mem[2] = 127;
+			mem[3] = 0x3C;
+			mem[0xA000 + 127] = 0x1F;
+			cpu->HL = 0xFF00;
+			cpu->IY = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x0F, HIBYTE(cpu->HL), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, mem[0xA000 + 127], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(F3 | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = -128;
+			mem[0xA000 - 128] = 0x01;
+			cpu->HL = 0xFF00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->HL), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x00, mem[0xA000 - 128], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x3D)	// DEC A		3D
+		{
+			mem[0] = 0x3D;
+			cpu->AF = 0x0086;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xCB3D)		// SRL L	CB 3D
+		{
+			mem[0] = 0xCB;
+			mem[1] = 0x3D;
+			cpu->HL = 0x001F;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x0F, LOBYTE(cpu->HL), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(F3 | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDDCB3D)		// SRL L,(IX+s)		DD CB ss 3D
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0xCB;
+			mem[2] = 127;
+			mem[3] = 0x3D;
+			mem[0xA000 + 127] = 0x1F;
+			cpu->HL = 0x00FF;
+			cpu->IX = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x0F, LOBYTE(cpu->HL), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, mem[0xA000 + 127], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(F3 | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = -128;
+			mem[0xA000 - 128] = 0x01;
+			cpu->HL = 0x00FF;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, LOBYTE(cpu->HL), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x00, mem[0xA000 - 128], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFDCB3D)		// SRL L,(IY+s)		FD CB ss 3D
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0xCB;
+			mem[2] = 127;
+			mem[3] = 0x3D;
+			mem[0xA000 + 127] = 0x1F;
+			cpu->HL = 0x00FF;
+			cpu->IY = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x0F, LOBYTE(cpu->HL), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, mem[0xA000 + 127], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(F3 | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = -128;
+			mem[0xA000 - 128] = 0x01;
+			cpu->HL = 0x00FF;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, LOBYTE(cpu->HL), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x00, mem[0xA000 - 128], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+		}
+
 		TEST_METHOD(Test0x3E)	// LD A,N	3E NN
 		{
 			mem[0] = 0x3E;
@@ -1015,6 +1634,121 @@ namespace ZxEmuTest
 			cpu->Step();
 			Assert::IsTrue(cpu->AF == 0xCC00);
 			Assert::IsTrue(cpu->PC == 2);
+		}
+
+		TEST_METHOD(Test0xCB3E)		// SRL (HL)		CB 3E
+		{
+			mem[0] = 0xCB;
+			mem[1] = 0x3E;
+			mem[0xA000] = 0x1F;
+			cpu->HL = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x0F, mem[0xA000], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(F3 | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDDCB3E)		// SRL (IX+s)	DD CB ss 3E
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0xCB;
+			mem[2] = 127;
+			mem[3] = 0x3E;
+			mem[0xA000 + 127] = 0x1F;
+			cpu->IX = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x0F, mem[0xA000 + 127], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(F3 | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = -128;
+			mem[0xA000 - 128] = 0x00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, mem[0xA000 - 128], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFDCB3E)		// SRL (IY+s)	FD CB ss 3E
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0xCB;
+			mem[2] = 127;
+			mem[3] = 0x3E;
+			mem[0xA000 + 127] = 0x1F;
+			cpu->IY = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x0F, mem[0xA000 + 127], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(F3 | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = -128;
+			mem[0xA000 - 128] = 0x00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, mem[0xA000 - 128], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xCB3F)		// SRL A	CB 3F
+		{
+			mem[0] = 0xCB;
+			mem[1] = 0x3F;
+			cpu->AF = 0x1F00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x0F, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(F3 | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDDCB3F)		// SRL A,(IX+s)		DD CB ss 3F
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0xCB;
+			mem[2] = 127;
+			mem[3] = 0x3F;
+			mem[0xA000 + 127] = 0x1F;
+			cpu->AF = 0xFF00;
+			cpu->IX = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x0F, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, mem[0xA000 + 127], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(F3 | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = -128;
+			mem[0xA000 - 128] = 0x01;
+			cpu->AF = 0xFF00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x00, mem[0xA000 - 128], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFDCB3F)		// SRL A,(IY+s)		FD CB ss 3F
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0xCB;
+			mem[2] = 127;
+			mem[3] = 0x3F;
+			mem[0xA000 + 127] = 0x1F;
+			cpu->AF = 0xFF00;
+			cpu->IY = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x0F, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, mem[0xA000 + 127], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(F3 | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = -128;
+			mem[0xA000 - 128] = 0x01;
+			cpu->AF = 0xFF00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x00, mem[0xA000 - 128], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 4, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0x41)	// LD B,C	41
@@ -1033,6 +1767,27 @@ namespace ZxEmuTest
 			cpu->Step();
 			Assert::IsTrue(cpu->BC == 0xAB00);
 			Assert::IsTrue(cpu->PC == 1);
+		}
+
+		TEST_METHOD(Test0xED42)			// SBÑ HL,BC	ED 42
+		{
+			mem[0] = 0xED;
+			mem[1] = 0x42;
+			cpu->AF = 0x0001;
+			cpu->HL = 0x0001;
+			cpu->BC = 0x0001;
+			cpu->Step();
+			Assert::AreEqual<__int16>(-1, cpu->HL, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | VF | NF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0x0000;
+			cpu->HL = 0x0001;
+			cpu->BC = 0x0001;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0, cpu->HL, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | NF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0x43)	// LD B,E	43
@@ -1204,6 +1959,27 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 1);
 		}
 
+		TEST_METHOD(Test0xED4A)			// ADÑ HL,BC	ED 4A
+		{
+			mem[0] = 0xED;
+			mem[1] = 0x4A;
+			cpu->AF = (NF | F5 | F3);
+			cpu->HL = 0xFFFF;
+			cpu->BC = 0x0001;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0, cpu->HL, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(PF | ZF | HF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = (NF | F5 | F3 | CF);
+			cpu->HL = 0xFFFF;
+			cpu->BC = 0x0001;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x0001, cpu->HL, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(PF | HF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
 		TEST_METHOD(Test0x4B)	// LD C,E	4B
 		{
 			mem[0] = 0x4B;
@@ -1370,6 +2146,26 @@ namespace ZxEmuTest
 			cpu->Step();
 			Assert::IsTrue(cpu->DE == 0xCD00);
 			Assert::IsTrue(cpu->PC == 1);
+		}
+
+		TEST_METHOD(Test0xED52)			// SBÑ HL,DE	ED 52
+		{
+			mem[0] = 0xED;
+			mem[1] = 0x52;
+			cpu->AF = 0x0001;
+			cpu->HL = 0x0001;
+			cpu->DE = 0x0001;
+			cpu->Step();
+			Assert::AreEqual<__int16>(-1, cpu->HL, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | VF | NF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0x0000;
+			cpu->HL = 0x0001;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0, cpu->HL, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | NF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0x53)	// LD D,E	53
@@ -1551,6 +2347,27 @@ namespace ZxEmuTest
 			cpu->Step();
 			Assert::IsTrue(cpu->DE == 0xABAB);
 			Assert::IsTrue(cpu->PC == 1);
+		}
+
+		TEST_METHOD(Test0xED5A)			// ADÑ HL,DE	ED 5A
+		{
+			mem[0] = 0xED;
+			mem[1] = 0x5A;
+			cpu->AF = (NF | F5 | F3);
+			cpu->HL = 0xFFFF;
+			cpu->DE = 0x0001;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0, cpu->HL, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(PF | ZF | HF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = (NF | F5 | F3 | CF);
+			cpu->HL = 0xFFFF;
+			cpu->DE = 0x0001;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x0001, cpu->HL, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(PF | HF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0xED5B)	// LD DE,(NN)	ED 5B NN NN
@@ -1762,6 +2579,25 @@ namespace ZxEmuTest
 			cpu->Step();
 			Assert::IsTrue(cpu->HL == 0xAB00);
 			Assert::IsTrue(cpu->PC == 1);
+		}
+
+		TEST_METHOD(Test0xED62)			// SBÑ HL,HL	ED 62
+		{
+			mem[0] = 0xED;
+			mem[1] = 0x62;
+			cpu->AF = 0x0001;
+			cpu->HL = 0x0001;
+			cpu->Step();
+			Assert::AreEqual<__int16>(-1, cpu->HL, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | VF | NF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0x0000;
+			cpu->HL = 0x0001;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0, cpu->HL, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | NF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0xDD62)	// LD XH,D	DD 62
@@ -2000,6 +2836,25 @@ namespace ZxEmuTest
 			cpu->Step();
 			Assert::IsTrue(cpu->HL == 0x00AB);
 			Assert::IsTrue(cpu->PC == 1);
+		}
+
+		TEST_METHOD(Test0xED6A)			// ADÑ HL,HL	ED 6A
+		{
+			mem[0] = 0xED;
+			mem[1] = 0x6A;
+			cpu->AF = (NF | F5 | F3);
+			cpu->HL = 0x8000;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0, cpu->HL, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(PF | ZF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = (NF | F5 | F3 | CF);
+			cpu->HL = 0x8000;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x0001, cpu->HL, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0xDD6A)	// LD XL,D	DD 6A
@@ -2281,6 +3136,26 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
 		}
 
+		TEST_METHOD(Test0xED72)			// SBÑ HL,SP	ED 72
+		{
+			mem[0] = 0xED;
+			mem[1] = 0x72;
+			cpu->AF = 0x0001;
+			cpu->HL = 0x0001;
+			cpu->SP = 0x0001;
+			cpu->Step();
+			Assert::AreEqual<__int16>(-1, cpu->HL, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | VF | NF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0x0000;
+			cpu->HL = 0x0001;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0, cpu->HL, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | NF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
 		TEST_METHOD(Test0xDD72)	// LD (IX+s),D	DD 72 ss
 		{
 			mem[0] = 0xDD;
@@ -2552,6 +3427,27 @@ namespace ZxEmuTest
 			cpu->Step();
 			Assert::IsTrue(cpu->AF == 0x1200);
 			Assert::IsTrue(cpu->PC == 1);
+		}
+
+		TEST_METHOD(Test0xED7A)			// ADÑ HL,SP	ED 7A
+		{
+			mem[0] = 0xED;
+			mem[1] = 0x7A;
+			cpu->AF = (NF | F5 | F3);
+			cpu->HL = 0xFFFF;
+			cpu->SP = 0x0001;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0, cpu->HL, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(PF | ZF | HF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = (NF | F5 | F3 | CF);
+			cpu->HL = 0xFFFF;
+			cpu->SP = 0x0001;
+			cpu->Step();
+			Assert::AreEqual<__int16>(0x0001, cpu->HL, L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(PF | HF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0x7B)	// LD A,E	7B
@@ -2847,6 +3743,1801 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
 		}
 
+		TEST_METHOD(Test0x88)	// ADC A,B		88
+		{
+			mem[0] = 0x88;
+			cpu->AF = 0xC886;
+			cpu->BC = 0xC800;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x90, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0xC887;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x91, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x89)	// ADC A,C		89
+		{
+			mem[0] = 0x89;
+			cpu->AF = 0xC886;
+			cpu->BC = 0x00C8;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x90, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0xC887;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x91, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x8A)	// ADC A,D		8A
+		{
+			mem[0] = 0x8A;
+			cpu->AF = 0xC886;
+			cpu->DE = 0xC800;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x90, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0xC887;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x91, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x8B)	// ADC A,E		8B
+		{
+			mem[0] = 0x8B;
+			cpu->AF = 0xC886;
+			cpu->DE = 0x00C8;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x90, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0xC887;
+			cpu->DE = 0x00C8;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x91, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x8C)	// ADC A,H		8C
+		{
+			mem[0] = 0x8C;
+			cpu->AF = 0xC886;
+			cpu->HL = 0xC800;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x90, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0xC887;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x91, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDD8C)	// ADC A,XH		DD 8C
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x8C;
+			cpu->AF = 0xC886;
+			cpu->IX = 0xC800;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x90, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0xC887;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x91, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFD8C)	// ADC A,YH		FD 8C
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x8C;
+			cpu->AF = 0xC886;
+			cpu->IY = 0xC800;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x90, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0xC887;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x91, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x8D)	// ADC A,L		8D
+		{
+			mem[0] = 0x8D;
+			cpu->AF = 0xC886;
+			cpu->HL = 0x00C8;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x90, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0xC887;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x91, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDD8D)	// ADC A,XL		DD 8D
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x8D;
+			cpu->AF = 0xC886;
+			cpu->IX = 0x00C8;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x90, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0xC887;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x91, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFD8D)	// ADC A,YL		FD 8D
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x8D;
+			cpu->AF = 0xC886;
+			cpu->IY = 0x00C8;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x90, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0xC887;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x91, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x8E)	// ADC A,(HL)	8E
+		{
+			mem[0] = 0x8E;
+			mem[0xA000] = 0xC8;
+			cpu->AF = 0xC886;
+			cpu->HL = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x90, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0xC887;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x91, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDD8E)	// ADC A,(IX+s)		DD 8E ss
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x8E;
+			mem[2] = 127;
+			mem[0xA000 + 127] = 0xC8;
+			cpu->AF = 0xC886;
+			cpu->IX = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x90, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = -128;
+			mem[0xA000 - 128] = 0xC8;
+			cpu->AF = 0xC887;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x91, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFD8E)	// ADC A,(IY+s)		FD 8E ss
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x8E;
+			mem[2] = 127;
+			mem[0xA000 + 127] = 0xC8;
+			cpu->AF = 0xC886;
+			cpu->IY = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x90, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = -128;
+			mem[0xA000 - 128] = 0xC8;
+			cpu->AF = 0xC887;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x91, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x8F)	// ADC A,A		8F
+		{
+			mem[0] = 0x8F;
+			cpu->AF = 0xC886;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x90, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0xC887;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x91, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x90)	// SUB B		90
+		{
+			mem[0] = 0x90;
+			cpu->AF = 0xFF86;
+			cpu->BC = 0xFF00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0x0186;
+			cpu->BC = 0x0200;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | CF | HF | F5 | F3 | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x91)	// SUB C		91
+		{
+			mem[0] = 0x91;
+			cpu->AF = 0xFF86;
+			cpu->BC = 0x00FF;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0x0186;
+			cpu->BC = 0x0002;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | CF | HF | F5 | F3 | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x92)	// SUB D		92
+		{
+			mem[0] = 0x92;
+			cpu->AF = 0xFF86;
+			cpu->DE = 0xFF00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0x0186;
+			cpu->DE = 0x0200;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | CF | HF | F5 | F3 | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x93)	// SUB E		93
+		{
+			mem[0] = 0x93;
+			cpu->AF = 0xFF86;
+			cpu->DE = 0x00FF;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0x0186;
+			cpu->DE = 0x0002;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | CF | HF | F5 | F3 | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x94)	// SUB H		94
+		{
+			mem[0] = 0x94;
+			cpu->AF = 0xFF86;
+			cpu->HL = 0xFF00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0x0186;
+			cpu->HL = 0x0200;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | CF | HF | F5 | F3 | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDD94)		// SUB XH		DD 94
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x94;
+			cpu->AF = 0xFF86;
+			cpu->IX = 0xFF00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0x0186;
+			cpu->IX = 0x0200;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | CF | HF | F5 | F3 | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFD94)		// SUB YH		FD 94
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x94;
+			cpu->AF = 0xFF86;
+			cpu->IY = 0xFF00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0x0186;
+			cpu->IY = 0x0200;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | CF | HF | F5 | F3 | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x95)	// SUB L		95
+		{
+			mem[0] = 0x95;
+			cpu->AF = 0xFF86;
+			cpu->HL = 0x00FF;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0x0186;
+			cpu->HL = 0x0002;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | CF | HF | F5 | F3 | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDD95)		// SUB XL		DD 95
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x95;
+			cpu->AF = 0xFF86;
+			cpu->IX = 0x00FF;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0x0186;
+			cpu->IX = 0x0002;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | CF | HF | F5 | F3 | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFD95)		// SUB YL		FD 95
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x95;
+			cpu->AF = 0xFF86;
+			cpu->IY = 0x00FF;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0x0186;
+			cpu->IY = 0x0002;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | CF | HF | F5 | F3 | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x96)		// SUB (HL)		96
+		{
+			mem[0] = 0x96;
+			mem[0xA000] = 0xFF;
+			cpu->AF = 0xFF86;
+			cpu->HL = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDD96)		// SUB (IX+s)		DD 96 ss
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x96;
+			mem[2] = 127;
+			mem[0xA000 + 127] = 0xFF;
+			cpu->AF = 0xFF86;
+			cpu->IX = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = -128;
+			mem[0xA000 - 128] = 0x01;
+			cpu->AF = 0x0086;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | NF | HF | VF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFD96)		// SUB (IY+s)		FD 96 ss
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x96;
+			mem[2] = 127;
+			mem[0xA000 + 127] = 0xFF;
+			cpu->AF = 0xFF86;
+			cpu->IY = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = -128;
+			mem[0xA000 - 128] = 0x01;
+			cpu->AF = 0x0086;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | NF | HF | VF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x97)	// SUB A		97
+		{
+			mem[0] = 0x97;
+			cpu->AF = 0xFF86;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x98)	// SBC A,B		98
+		{
+			mem[0] = 0x98;
+			cpu->AF = 0x0101;
+			cpu->BC = 0x0100;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | NF | VF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x99)	// SBC A,C		99
+		{
+			mem[0] = 0x99;
+			cpu->AF = 0x0101;
+			cpu->BC = 0x0001;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | NF | VF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x9A)	// SBC A,D		9A
+		{
+			mem[0] = 0x9A;
+			cpu->AF = 0x0101;
+			cpu->DE = 0x0100;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | NF | VF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x9B)	// SBC A,E		9B
+		{
+			mem[0] = 0x9B;
+			cpu->AF = 0x0101;
+			cpu->DE = 0x0001;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | NF | VF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x9C)	// SBC A,H		9C
+		{
+			mem[0] = 0x9C;
+			cpu->AF = 0x0101;
+			cpu->HL = 0x0100;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | NF | VF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDD9C)	// SBC A,XH		DD 9C
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x9C;
+			cpu->AF = 0x0101;
+			cpu->IX = 0x0100;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | NF | VF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFD9C)	// SBC A,YH		FD 9C
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x9C;
+			cpu->AF = 0x0101;
+			cpu->IY = 0x0100;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | NF | VF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x9D)	// SBC A,L		9D
+		{
+			mem[0] = 0x9D;
+			cpu->AF = 0x0101;
+			cpu->HL = 0x0001;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | NF | VF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDD9D)	// SBC A,XL		DD 9D
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x9D;
+			cpu->AF = 0x0101;
+			cpu->IX = 0x0001;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | NF | VF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFD9D)	// SBC A,YL		FD 9D
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x9D;
+			cpu->AF = 0x0101;
+			cpu->IY = 0x0001;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | NF | VF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x9E)	// SBC A,(HL)	9E
+		{
+			mem[0] = 0x9E;
+			mem[0xA000] = 0x01;
+			cpu->AF = 0x0101;
+			cpu->HL = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | NF | VF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDD9E)		// SBC A,(IX+s)		DD 9E ss
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0x9E;
+			mem[2] = 127;
+			mem[0xA000 + 127] = 0x01;
+			cpu->AF = 0x0100;
+			cpu->IX = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | NF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = -128;
+			mem[0xA000 - 128] = 0x01;
+			cpu->AF = 0x0101;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | NF | VF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFD9E)		// SBC A,(IY+s)		FD 9E ss
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0x9E;
+			mem[2] = 127;
+			mem[0xA000 + 127] = 0x01;
+			cpu->AF = 0x0100;
+			cpu->IY = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | NF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = -128;
+			mem[0xA000 - 128] = 0x01;
+			cpu->AF = 0x0101;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | NF | VF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0x9F)	// SBC A,A		9F
+		{
+			mem[0] = 0x9F;
+			cpu->AF = 0x0101;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | NF | VF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xA0)	// AND B	A0
+		{
+			mem[0] = 0xA0;
+			cpu->AF = 0xFF00;
+			cpu->BC = 0xFF00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->BC), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0xF000;
+			cpu->BC = 0x0F00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, HIBYTE(cpu->BC), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | HF | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xA1)	// AND C	A1
+		{
+			mem[0] = 0xA1;
+			cpu->AF = 0xFF00;
+			cpu->BC = 0x00FF;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0xFF, LOBYTE(cpu->BC), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0xF000;
+			cpu->BC = 0x000F;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, LOBYTE(cpu->BC), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | HF | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xA2)	// AND D	A2
+		{
+			mem[0] = 0xA2;
+			cpu->AF = 0xFF00;
+			cpu->DE = 0xFF00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->DE), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0xF000;
+			cpu->DE = 0x0F00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, HIBYTE(cpu->DE), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | HF | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xA3)	// AND E	A3
+		{
+			mem[0] = 0xA3;
+			cpu->AF = 0xFF00;
+			cpu->DE = 0x00FF;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0xFF, LOBYTE(cpu->DE), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0xF000;
+			cpu->DE = 0x000F;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, LOBYTE(cpu->DE), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | HF | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xA4)	// AND H	A4
+		{
+			mem[0] = 0xA4;
+			cpu->AF = 0xFF00;
+			cpu->HL = 0xFF00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->HL), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0xF000;
+			cpu->HL = 0x0F00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, HIBYTE(cpu->HL), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | HF | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDDA4)		// AND XH	DD A4
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0xA4;
+			cpu->AF = 0xFF00;
+			cpu->IX = 0xFF00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->IX), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0xF000;
+			cpu->IX = 0x0F00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, HIBYTE(cpu->IX), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | HF | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFDA4)		// AND YH	FD A4
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0xA4;
+			cpu->AF = 0xFF00;
+			cpu->IY = 0xFF00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->IY), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0xF000;
+			cpu->IY = 0x0F00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, HIBYTE(cpu->IY), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | HF | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xA5)	// AND L	A5
+		{
+			mem[0] = 0xA5;
+			cpu->AF = 0xFF00;
+			cpu->HL = 0x00FF;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0xFF, LOBYTE(cpu->HL), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0xF000;
+			cpu->HL = 0x000F;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, LOBYTE(cpu->HL), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | HF | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDDA5)		// AND XL	DD A5
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0xA5;
+			cpu->AF = 0xFF00;
+			cpu->IX = 0x00FF;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0xFF, LOBYTE(cpu->IX), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0xF000;
+			cpu->IX = 0x000F;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, LOBYTE(cpu->IX), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | HF | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFDA5)		// AND YL	FD A5
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0xA5;
+			cpu->AF = 0xFF00;
+			cpu->IY = 0x00FF;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0xFF, LOBYTE(cpu->IY), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0xF000;
+			cpu->IY = 0x000F;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, LOBYTE(cpu->IY), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | HF | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xA6)	// AND (HL)		A6
+		{
+			mem[0] = 0xA6;
+			cpu->AF = 0xFF00;
+			mem[0xA000] = 0xFF;
+			cpu->HL = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0xFF, mem[0xA000], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0xF000;
+			mem[0xA000] = 0x0F;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, mem[0xA000], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | HF | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDDA6)		// AND (IX+s)	DD A6 ss
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0xA6;
+			mem[2] = 127;
+			cpu->AF = 0xFF00;
+			mem[0xA000 + 127] = 0xFF;
+			cpu->IX = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0xFF, mem[0xA000 + 127], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = -128;
+			cpu->AF = 0xF000;
+			mem[0xA000 - 128] = 0x0F;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, mem[0xA000 - 128], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | HF | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFDA6)		// AND (IY+s)	FD A6 ss
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0xA6;
+			mem[2] = 127;
+			cpu->AF = 0xFF00;
+			mem[0xA000 + 127] = 0xFF;
+			cpu->IY = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0xFF, mem[0xA000 + 127], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = -128;
+			cpu->AF = 0xF000;
+			mem[0xA000 - 128] = 0x0F;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, mem[0xA000 - 128], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | HF | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xA7)	// AND A	A7
+		{
+			mem[0] = 0xA7;
+			cpu->AF = 0x2800;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x28, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(HF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xA8)	// XOR B	A8
+		{
+			mem[0] = 0xA8;
+			cpu->AF = 0xF000;
+			cpu->BC = 0x0F00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0xF000;
+			cpu->BC = 0x7F00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x8F, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F3, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xA9)	// XOR C	A9
+		{
+			mem[0] = 0xA9;
+			cpu->AF = 0xF000;
+			cpu->BC = 0x000F;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0xF000;
+			cpu->BC = 0x007F;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x8F, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F3, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xAA)	// XOR D	AA
+		{
+			mem[0] = 0xAA;
+			cpu->AF = 0xF000;
+			cpu->DE = 0x0F00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0xF000;
+			cpu->DE = 0x7F00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x8F, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F3, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xAB)	// XOR E	AB
+		{
+			mem[0] = 0xAB;
+			cpu->AF = 0xF000;
+			cpu->DE = 0x000F;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0xF000;
+			cpu->DE = 0x007F;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x8F, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F3, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xAC)	// XOR H	AC
+		{
+			mem[0] = 0xAC;
+			cpu->AF = 0xF000;
+			cpu->HL = 0x0F00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0xF000;
+			cpu->HL = 0x7F00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x8F, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F3, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDDAC)	// XOR XH	DD AC
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0xAC;
+			cpu->AF = 0xF000;
+			cpu->IX = 0x0F00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0xF000;
+			cpu->IX = 0x7F00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x8F, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F3, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFDAC)	// XOR YH	FD AC
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0xAC;
+			cpu->AF = 0xF000;
+			cpu->IY = 0x0F00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0xF000;
+			cpu->IY = 0x7F00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x8F, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F3, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xAD)	// XOR L	AD
+		{
+			mem[0] = 0xAD;
+			cpu->AF = 0xF000;
+			cpu->HL = 0x000F;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0xF000;
+			cpu->HL = 0x007F;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x8F, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F3, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDDAD)	// XOR XL	DD AD
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0xAD;
+			cpu->AF = 0xF000;
+			cpu->IX = 0x000F;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0xF000;
+			cpu->IX = 0x007F;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x8F, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F3, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFDAD)	// XOR YL	FD AD
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0xAD;
+			cpu->AF = 0xF000;
+			cpu->IY = 0x000F;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0xF000;
+			cpu->IY = 0x007F;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x8F, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F3, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xAE)	// XOR (HL)		AE
+		{
+			mem[0] = 0xAE;
+			mem[0xA000] = 0x0F;
+			cpu->AF = 0xF000;
+			cpu->HL = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, mem[0xA000], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			mem[0xA000] = 0x7F;
+			cpu->AF = 0xF000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x8F, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x7F, mem[0xA000], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F3, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDDAE)	// XOR (IX+s)	DD AE ss
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0xAE;
+			mem[2] = 127;
+			mem[0xA000 + 127] = 0x0F;
+			cpu->AF = 0xF000;
+			cpu->IX = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, mem[0xA000 + 127], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = -128;
+			mem[0xA000 - 128] = 0x7F;
+			cpu->AF = 0xF000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x8F, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x7F, mem[0xA000 - 128], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F3, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFDAE)	// XOR (IY+s)	FD AE ss
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0xAE;
+			mem[2] = 127;
+			mem[0xA000 + 127] = 0x0F;
+			cpu->AF = 0xF000;
+			cpu->IY = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, mem[0xA000 + 127], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = -128;
+			mem[0xA000 - 128] = 0x7F;
+			cpu->AF = 0xF000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x8F, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x7F, mem[0xA000 - 128], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F3, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xAF)	// XOR A	AF
+		{
+			mem[0] = 0xAF;
+			cpu->AF = 0x2800;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xB0)	// OR B		B0
+		{
+			mem[0] = 0xB0;
+			cpu->AF = 0xF000;
+			cpu->BC = 0x0F00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, HIBYTE(cpu->BC), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0x0000;
+			cpu->BC = 0x8F00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x8F, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x8F, HIBYTE(cpu->BC), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F3, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xB1)	// OR C		B1
+		{
+			mem[0] = 0xB1;
+			cpu->AF = 0xF000;
+			cpu->BC = 0x000F;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, LOBYTE(cpu->BC), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0x0000;
+			cpu->BC = 0x008F;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x8F, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x8F, LOBYTE(cpu->BC), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F3, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xB2)	// OR D		B2
+		{
+			mem[0] = 0xB2;
+			cpu->AF = 0xF000;
+			cpu->DE = 0x0F00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, HIBYTE(cpu->DE), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0x0000;
+			cpu->DE = 0x8F00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x8F, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x8F, HIBYTE(cpu->DE), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F3, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xB3)	// OR E		B3
+		{
+			mem[0] = 0xB3;
+			cpu->AF = 0xF000;
+			cpu->DE = 0x000F;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, LOBYTE(cpu->DE), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0x0000;
+			cpu->DE = 0x008F;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x8F, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x8F, LOBYTE(cpu->DE), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F3, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xB4)	// OR H		B4
+		{
+			mem[0] = 0xB4;
+			cpu->AF = 0xF000;
+			cpu->HL = 0x0F00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, HIBYTE(cpu->HL), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0x0000;
+			cpu->HL = 0x8F00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x8F, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x8F, HIBYTE(cpu->HL), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F3, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDDB4)	// OR XH	DD B4
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0xB4;
+			cpu->AF = 0xF000;
+			cpu->IX = 0x0F00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, HIBYTE(cpu->IX), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0x0000;
+			cpu->IX = 0x8F00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x8F, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x8F, HIBYTE(cpu->IX), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F3, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFDB4)	// OR YH	FD B4
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0xB4;
+			cpu->AF = 0xF000;
+			cpu->IY = 0x0F00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, HIBYTE(cpu->IY), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0x0000;
+			cpu->IY = 0x8F00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x8F, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x8F, HIBYTE(cpu->IY), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F3, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xB5)	// OR L		B5
+		{
+			mem[0] = 0xB5;
+			cpu->AF = 0xF000;
+			cpu->HL = 0x000F;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, LOBYTE(cpu->HL), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0x0000;
+			cpu->HL = 0x008F;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x8F, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x8F, LOBYTE(cpu->HL), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F3, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDDB5)	// OR XL	DD B5
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0xB5;
+			cpu->AF = 0xF000;
+			cpu->IX = 0x000F;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, LOBYTE(cpu->IX), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0x0000;
+			cpu->IX = 0x008F;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x8F, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x8F, LOBYTE(cpu->IX), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F3, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFDB5)	// OR YL	FD B5
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0xB5;
+			cpu->AF = 0xF000;
+			cpu->IY = 0x000F;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, LOBYTE(cpu->IY), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0x0000;
+			cpu->IY = 0x008F;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x8F, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x8F, LOBYTE(cpu->IY), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F3, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xB6)	// OR (HL)	B6
+		{
+			mem[0] = 0xB6;
+			mem[0xA000] = 0x0F;
+			cpu->AF = 0xF000;
+			cpu->HL = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, mem[0xA000], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			mem[0xA000] = 0x8F;
+			cpu->AF = 0x0000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x8F, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x8F, mem[0xA000], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F3, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDDB6)	// OR (IX+s)	DD B6 ss
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0xB6;
+			mem[2] = 127;
+			mem[0xA000 + 127] = 0x0F;
+			cpu->AF = 0xF000;
+			cpu->IX = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, mem[0xA000 + 127], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = -128;
+			mem[0xA000 - 128] = 0x8F;
+			cpu->AF = 0x0000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x8F, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x8F, mem[0xA000 - 128], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F3, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFDB6)	// OR (IY+s)	FD B6 ss
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0xB6;
+			mem[2] = 127;
+			mem[0xA000 + 127] = 0x0F;
+			cpu->AF = 0xF000;
+			cpu->IY = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, mem[0xA000 + 127], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = -128;
+			mem[0xA000 - 128] = 0x8F;
+			cpu->AF = 0x0000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x8F, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x8F, mem[0xA000 - 128], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F3, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xB7)	// OR A		B7
+		{
+			mem[0] = 0xB7;
+			cpu->AF = 0x2800;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x28, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xB8)	// CP B		B8
+		{
+			mem[0] = 0xB8;
+			cpu->AF = 0x2800;
+			cpu->BC = 0x2800;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x28, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x28, HIBYTE(cpu->BC), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | NF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0x0000;
+			cpu->BC = 0x0100;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x01, HIBYTE(cpu->BC), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | HF | VF | NF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xB9)	// CP C		B9
+		{
+			mem[0] = 0xB9;
+			cpu->AF = 0x2800;
+			cpu->BC = 0x0028;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x28, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x28, LOBYTE(cpu->BC), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | NF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0x0000;
+			cpu->BC = 0x0001;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x01, LOBYTE(cpu->BC), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | HF | VF | NF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xBA)	// CP D		BA
+		{
+			mem[0] = 0xBA;
+			cpu->AF = 0x2800;
+			cpu->DE = 0x2800;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x28, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x28, HIBYTE(cpu->DE), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | NF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0x0000;
+			cpu->DE = 0x0100;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x01, HIBYTE(cpu->DE), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | HF | VF | NF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xBB)	// CP E		BB
+		{
+			mem[0] = 0xBB;
+			cpu->AF = 0x2800;
+			cpu->DE = 0x0028;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x28, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x28, LOBYTE(cpu->DE), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | NF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0x0000;
+			cpu->DE = 0x0001;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x01, LOBYTE(cpu->DE), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | HF | VF | NF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xBC)	// CP H		BC
+		{
+			mem[0] = 0xBC;
+			cpu->AF = 0x2800;
+			cpu->HL = 0x2800;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x28, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x28, HIBYTE(cpu->HL), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | NF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0x0000;
+			cpu->HL = 0x0100;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x01, HIBYTE(cpu->HL), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | HF | VF | NF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDDBC)		// CP XH		DD BC
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0xBC;
+			cpu->AF = 0x2800;
+			cpu->IX = 0x2800;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x28, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x28, HIBYTE(cpu->IX), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | NF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0x0000;
+			cpu->IX = 0x0100;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x01, HIBYTE(cpu->IX), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | HF | VF | NF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFDBC)		// CP YH		FD BC
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0xBC;
+			cpu->AF = 0x2800;
+			cpu->IY = 0x2800;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x28, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x28, HIBYTE(cpu->IY), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | NF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0x0000;
+			cpu->IY = 0x0100;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x01, HIBYTE(cpu->IY), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | HF | VF | NF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xBD)	// CP L		BD
+		{
+			mem[0] = 0xBD;
+			cpu->AF = 0x2800;
+			cpu->HL = 0x0028;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x28, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x28, LOBYTE(cpu->HL), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | NF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0x0000;
+			cpu->HL = 0x0001;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x01, LOBYTE(cpu->HL), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | HF | VF | NF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDDBD)		// CP XL	DD BD
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0xBD;
+			cpu->AF = 0x2800;
+			cpu->IX = 0x0028;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x28, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x28, LOBYTE(cpu->IX), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | NF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0x0000;
+			cpu->IX = 0x0001;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x01, LOBYTE(cpu->IX), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | HF | VF | NF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFDBD)		// CP YL	FD BD
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0xBD;
+			cpu->AF = 0x2800;
+			cpu->IY = 0x0028;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x28, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x28, LOBYTE(cpu->IY), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | NF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0x0000;
+			cpu->IY = 0x0001;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x01, LOBYTE(cpu->IY), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | HF | VF | NF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xBE)	// CP (HL)		BE
+		{
+			mem[0] = 0xBE;
+			mem[0xA000] = 0x28;
+			cpu->AF = 0x2800;
+			cpu->HL = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x28, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x28, mem[0xA000], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | NF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+			cpu->PC = 0;
+			mem[0xA000] = 0x01;
+			cpu->AF = 0x0000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x01, mem[0xA000], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | HF | VF | NF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDDBE)		// CP (IX+s)	DD BE ss
+		{
+			mem[0] = 0xDD;
+			mem[1] = 0xBE;
+			mem[2] = 127;
+			mem[0xA000 + 127] = 0x28;
+			cpu->AF = 0x2800;
+			cpu->IX = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x28, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x28, mem[0xA000 + 127], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | NF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = -128;
+			mem[0xA000 - 128] = 0x01;
+			cpu->AF = 0x0000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x01, mem[0xA000 - 128], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | HF | VF | NF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFDBE)		// CP (IY+s)	FD BE ss
+		{
+			mem[0] = 0xFD;
+			mem[1] = 0xBE;
+			mem[2] = 127;
+			mem[0xA000 + 127] = 0x28;
+			cpu->AF = 0x2800;
+			cpu->IY = 0xA000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x28, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x28, mem[0xA000 + 127], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | NF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+			cpu->PC = 0;
+			mem[2] = -128;
+			mem[0xA000 - 128] = 0x01;
+			cpu->AF = 0x0000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x01, mem[0xA000 - 128], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | HF | VF | NF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 3, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xBF)	// CP A		BF
+		{
+			mem[0] = 0xBF;
+			cpu->AF = 0x2800;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x28, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | F5 | F3 | NF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
 		TEST_METHOD(Test0xC0)	// RET NZ		C0
 		{
 			mem[0] = 0xC0;
@@ -3015,6 +5706,23 @@ namespace ZxEmuTest
 			Assert::AreEqual<__int16>(0x1234, cpu->PC, L"PC wrong");
 		}
 
+		TEST_METHOD(Test0xCE)	// ADC A,N		CE NN
+		{
+			mem[0] = 0xCE;
+			mem[1] = 0xC8;
+			cpu->AF = 0xC886;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x90, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0xC887;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x91, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(CF | HF | SF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
 		TEST_METHOD(Test0xCF)	// RST #8		CF
 		{
 			mem[0] = 0xCF;
@@ -3096,6 +5804,17 @@ namespace ZxEmuTest
 			Assert::AreEqual<__int16>(1, cpu->PC, L"PC wrong");
 		}
 
+		TEST_METHOD(Test0xD6)	// SUB N		D6 NN
+		{
+			mem[0] = 0xD6;
+			mem[1] = 0xFF;
+			cpu->AF = 0xFF86;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
 		TEST_METHOD(Test0xD7)	// RST #10		D7
 		{
 			mem[0] = 0xD7;
@@ -3168,6 +5887,17 @@ namespace ZxEmuTest
 			cpu->Step();
 			Assert::AreEqual<__int16>(0x1FFD, cpu->SP, L"SP wrong");
 			Assert::AreEqual<__int16>(0x0003, cpu->PC, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xDE)	// SBC A,N		DE NN
+		{
+			mem[0] = 0xDE;
+			mem[1] = 0x01;
+			cpu->AF = 0x0101;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | NF | VF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0xDF)	// RST #18		DF
@@ -3341,6 +6071,26 @@ namespace ZxEmuTest
 			Assert::AreEqual<__int16>(2, cpu->PC, L"PC wrong");
 		}
 
+		TEST_METHOD(Test0xE6)	// AND N	E6 NN
+		{
+			mem[0] = 0xE6;
+			mem[1] = 0xFF;
+			cpu->AF = 0xFF00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0xFF, mem[1], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+			cpu->PC = 0;
+			cpu->AF = 0xF000;
+			mem[1] = 0x0F;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, mem[1], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | HF | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
 		TEST_METHOD(Test0xE7)	// RST #20		E7
 		{
 			mem[0] = 0xE7;
@@ -3434,6 +6184,26 @@ namespace ZxEmuTest
 			Assert::AreEqual<__int16>(0x0003, cpu->PC, L"PC wrong");
 		}
 
+		TEST_METHOD(Test0xEE)	// XOR N	EE NN
+		{
+			mem[0] = 0xEE;
+			mem[1] = 0x0F;
+			cpu->AF = 0xF000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, mem[1], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+			cpu->PC = 0;
+			mem[1] = 0x7F;
+			cpu->AF = 0xF000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x8F, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x7F, mem[1], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F3, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
 		TEST_METHOD(Test0xEF)	// RST #28		EF
 		{
 			mem[0] = 0xEF;
@@ -3513,6 +6283,26 @@ namespace ZxEmuTest
 			Assert::AreEqual<__int8>(mem[0x1FFD], 0x34, L"Memory wrong");
 			Assert::AreEqual<__int8>(mem[0x1FFE], 0x12, L"Memory wrong");
 			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xF6)	// OR N		F6 NN
+		{
+			mem[0] = 0xF6;
+			mem[1] = 0x0F;
+			cpu->AF = 0xF000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0xFF, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x0F, mem[1], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | PF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+			cpu->PC = 0;
+			mem[1] = 0x8F;
+			cpu->AF = 0x0000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x8F, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x8F, mem[1], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F3, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0xF7)	// RST #30		F7
@@ -3602,6 +6392,26 @@ namespace ZxEmuTest
 			cpu->Step();
 			Assert::AreEqual<__int16>(0x1FFD, cpu->SP, L"SP wrong");
 			Assert::AreEqual<__int16>(0x0003, cpu->PC, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xFE)	// CP N		FE NN
+		{
+			mem[0] = 0xFE;
+			mem[1] = 0x28;
+			cpu->AF = 0x2800;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x28, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x28, mem[1], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(ZF | NF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+			cpu->PC = 0;
+			mem[1] = 0x01;
+			cpu->AF = 0x0000;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x00, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(0x01, mem[1], L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(SF | F5 | F3 | HF | VF | NF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0xFF)	// RST #38		FF
