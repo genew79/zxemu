@@ -80,5 +80,6 @@ public:
 	unsigned __int8 OR8(unsigned __int8 reg1, unsigned __int8 reg2);
 	unsigned __int8 XOR8(unsigned __int8 reg1, unsigned __int8 reg2);
 	unsigned __int8 SRL8(unsigned __int8 reg1);
+	unsigned __int8 SRA8(unsigned __int8 reg1);
 	void Stop(unsigned __int8 opcode);
 };

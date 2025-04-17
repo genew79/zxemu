@@ -746,6 +746,17 @@ namespace ZxEmuTest
 			Assert::AreEqual<__int16>(2, cpu->PC, L"PC wrong");
 		}
 
+		TEST_METHOD(Test0xCB28)		// SRA B	CB 28
+		{
+			mem[0] = 0xCB;
+			mem[1] = 0x28;
+			cpu->BC = 0x1F00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x0F, HIBYTE(cpu->BC), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(F3 | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
 		TEST_METHOD(Test0x29)	// ADD HL,HL	29
 		{
 			mem[0] = 0x29;
@@ -755,6 +766,17 @@ namespace ZxEmuTest
 			Assert::AreEqual<__int16>(0, cpu->HL, L"Result wrong");
 			Assert::AreEqual<unsigned __int8>(CF, LOBYTE(cpu->AF), L"Flags wrong");
 			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xCB29)		// SRA C	CB 29
+		{
+			mem[0] = 0xCB;
+			mem[1] = 0x29;
+			cpu->BC = 0x001F;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x0F, LOBYTE(cpu->BC), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(F3 | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0xDD29)	// ADD IX,IX	DD 29
@@ -793,6 +815,17 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 3);
 		}
 
+		TEST_METHOD(Test0xCB2A)		// SRA D	CB 2A
+		{
+			mem[0] = 0xCB;
+			mem[1] = 0x2A;
+			cpu->DE = 0x1F00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x0F, HIBYTE(cpu->DE), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(F3 | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
 		TEST_METHOD(Test0xDD2A)	// LD IX,(NN)	DD 2A NN NN
 		{
 			mem[0] = 0xDD;
@@ -828,6 +861,17 @@ namespace ZxEmuTest
 			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
 		}
 
+		TEST_METHOD(Test0xCB2B)		// SRA E	CB 2B
+		{
+			mem[0] = 0xCB;
+			mem[1] = 0x2B;
+			cpu->DE = 0x001F;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x0F, LOBYTE(cpu->DE), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(F3 | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
+		}
+
 		TEST_METHOD(Test0xDD2B)	// DEC IX	DD 2B
 		{
 			mem[0] = 0xDD;
@@ -857,6 +901,17 @@ namespace ZxEmuTest
 			Assert::AreEqual<__int16>(0, cpu->HL, L"Result wrong");
 			Assert::AreEqual<unsigned __int8>(HF | PF | ZF, LOBYTE(cpu->AF), L"Flags wrong");
 			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xCB2C)		// SRA H	CB 2C
+		{
+			mem[0] = 0xCB;
+			mem[1] = 0x2C;
+			cpu->HL = 0x1F00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x0F, HIBYTE(cpu->HL), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(F3 | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0xDD2C)	// INC XL	DD 2C
@@ -891,6 +946,17 @@ namespace ZxEmuTest
 			Assert::AreEqual<unsigned __int8>(0xFF, LOBYTE(cpu->HL), L"Result wrong");
 			Assert::AreEqual<unsigned __int8>(SF | HF | F5 | F3 | NF | VF, LOBYTE(cpu->AF), L"Flags wrong");
 			Assert::IsTrue(cpu->PC == 1, L"PC wrong");
+		}
+
+		TEST_METHOD(Test0xCB2D)		// SRA L	CB 2D
+		{
+			mem[0] = 0xCB;
+			mem[1] = 0x2D;
+			cpu->HL = 0x001F;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x0F, LOBYTE(cpu->HL), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(F3 | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0xDD2D)	// DEC XL	DD 2D
@@ -942,6 +1008,17 @@ namespace ZxEmuTest
 			cpu->Step();
 			Assert::IsTrue(cpu->IY == 0x00CC);
 			Assert::IsTrue(cpu->PC == 3);
+		}
+
+		TEST_METHOD(Test0xCB2F)		// SRA A	CB 2F
+		{
+			mem[0] = 0xCB;
+			mem[1] = 0x2F;
+			cpu->AF = 0x1F00;
+			cpu->Step();
+			Assert::AreEqual<unsigned __int8>(0x0F, HIBYTE(cpu->AF), L"Result wrong");
+			Assert::AreEqual<unsigned __int8>(F3 | PF | CF, LOBYTE(cpu->AF), L"Flags wrong");
+			Assert::IsTrue(cpu->PC == 2, L"PC wrong");
 		}
 
 		TEST_METHOD(Test0x30)	// JR NC,s		30 ss

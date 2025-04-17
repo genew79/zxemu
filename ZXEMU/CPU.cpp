@@ -211,6 +211,16 @@ unsigned __int8 CPU::SRL8(unsigned __int8 reg1)
 	return res;
 }
 
+unsigned __int8 CPU::SRA8(unsigned __int8 reg1)
+{
+	auto flags = PF;
+	auto res = reg1 >> 1;
+	flags |= (reg1 & CF);
+	flags |= (res == 0 ? ZF : 0);		// ZF
+	flags |= (res & (SF | F3 | F5));
+	AF = 256 * HIBYTE(AF) + flags;
+	return res;
+}
 
 
 void CPU::Stop(unsigned __int8 opcode)
@@ -562,13 +572,20 @@ void CPU::Processing_20_2F(unsigned __int8 opcode, unsigned __int8 prefix)
 		Stop(opcode);
 		break;
 	case 0x28:
-		if (AF & 0b01000000)
-			PC = PC + (__int8)ram[PC] + 1;		// JR Z,s		28 ss
+		if (prefix == 0xCB)
+			BC = 256 * SRA8(HIBYTE(BC)) + LOBYTE(BC);				// SRA B	CB 28
 		else
-			PC += 1;
+		{
+			if (AF & 0b01000000)
+				PC = PC + (__int8)ram[PC] + 1;		// JR Z,s		28 ss
+			else
+				PC += 1;
+		}
 		break;
 	case 0x29:
-		if (prefix == 0xDD)
+		if (prefix == 0xCB)
+			BC = 256 * HIBYTE(BC) + SRA8(LOBYTE(BC));				// SRA C	CB 29
+		else if (prefix == 0xDD)
 			IX = ADD16(IX, IX);			// ADD IX,IX	DD 29
 		else if (prefix == 0xFD)
 			IY = ADD16(IY, IY);			// ADD IY,IY	FD 29
@@ -576,7 +593,9 @@ void CPU::Processing_20_2F(unsigned __int8 opcode, unsigned __int8 prefix)
 			HL = ADD16(HL, HL);			// ADD HL,HL	29
 		break;
 	case 0x2A:
-		if (prefix == 0xDD)
+		if (prefix == 0xCB)
+			DE = 256 * SRA8(HIBYTE(DE)) + LOBYTE(DE);				// SRA D	CB 2A
+		else if (prefix == 0xDD)
 		{
 			LD8LO(IX, ram[ram[PC + 1] * 256 + ram[PC] + 0]);		// LD IX,(NN)	DD 2A NN NN
 			LD8HI(IX, ram[ram[PC + 1] * 256 + ram[PC] + 1]);
@@ -596,15 +615,19 @@ void CPU::Processing_20_2F(unsigned __int8 opcode, unsigned __int8 prefix)
 		}
 		break;
 	case 0x2B:
-		if (prefix == 0xDD)
+		if (prefix == 0xCB)
+			DE = 256 * HIBYTE(DE) + SRA8(LOBYTE(DE));				// SRA E	CB 2B
+		else if (prefix == 0xDD)
 			IX--;		// DEC IX		DD 2B
-		if (prefix == 0xFD)
+		else if (prefix == 0xFD)
 			IY--;		// DEC IY		FD 2B
 		else
 			HL--;		// DEC HL		2B
 		break;
 	case 0x2C:
-		if (prefix == 0xDD)
+		if (prefix == 0xCB)
+			HL = 256 * SRA8(HIBYTE(HL)) + LOBYTE(HL);				// SRA H	CB 2C
+		else if (prefix == 0xDD)
 			IX = 256 * HIBYTE(IX) + Add8(LOBYTE(IX), 1, true);		// INC XL	DD 2C
 		else if (prefix == 0xFD)
 			IY = 256 * HIBYTE(IY) + Add8(LOBYTE(IY), 1, true);		// INC YL	FD 2C
@@ -612,7 +635,9 @@ void CPU::Processing_20_2F(unsigned __int8 opcode, unsigned __int8 prefix)
 			HL = 256 * HIBYTE(HL) + Add8(LOBYTE(HL), 1, true);		// INC L	2C
 		break;
 	case 0x2D:
-		if (prefix == 0xDD)
+		if (prefix == 0xCB)
+			HL = 256 * HIBYTE(HL) + SRA8(LOBYTE(HL));				// SRA L	CB 2D
+		else if (prefix == 0xDD)
 			IX = 256 * HIBYTE(IX) + SUB8(LOBYTE(IX), 1, true);		// DEC XL	DD 2D
 		else if (prefix == 0xFD)
 			IY = 256 * HIBYTE(IY) + SUB8(LOBYTE(IY), 1, true);		// DEC YL	FD 2D
@@ -629,7 +654,8 @@ void CPU::Processing_20_2F(unsigned __int8 opcode, unsigned __int8 prefix)
 		PC += 1;
 		break;
 	case 0x2F:
-		Stop(opcode);
+		if (prefix == 0xCB)
+			AF = 256 * SRA8(HIBYTE(AF)) + LOBYTE(AF);				// SRA A	CB 2F
 		break;
 	default:
 		break;
